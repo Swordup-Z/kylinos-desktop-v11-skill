@@ -4,27 +4,6 @@
 
 A reusable skill and knowledge base for diagnosing, fixing, verifying, and recording KylinOS Desktop V11 system issues. It covers UKUI, KARE/Kaiming, TUN, autostart, maintenance mode, system services, partitions, mounts, overlay views, and the PanShi system architecture.
 
-## Core Requirements
-
-When using this skill for system troubleshooting, the AI tool must follow these baseline rules:
-
-- Read [`SKILL.md`](SKILL.md) first, then selectively read the relevant `references/*.md` files listed there; do not preload every reference file.
-- Follow the loop: diagnosis -> repair -> verification -> record reusable findings.
-- Before system-level repairs, run `mm-cli -s` to check maintenance mode; outside maintenance mode, only perform non-destructive diagnostics such as reading state or simulating installs/removals.
-- If the system is not in maintenance mode, enter maintenance mode and ask the user to reboot; after the fix is complete, exit maintenance mode and ask the user to reboot again to return to normal mode.
-- Do not delete, move, or overwrite existing executables, configs, subscription files, proxy cores, systemd units, or user data unless the user explicitly asks and the impact has been verified.
-- After a fix is confirmed, record reusable diagnosis steps, repair steps, risks, or system traits in `SKILL.md` or the relevant `references/*.md` file.
-- When running any `git commit`, do not include AI-related author, co-author, generator, or assistant attribution in the commit author, commit body, or commit trailers.
-
-## Supported Issues
-
-- Clash Verge Rev TUN mode, `clash-verge-service`, `/dev/net/tun`, and missing or misplaced `verge-mihomo`: [`references/clash-verge-tun.md`](references/clash-verge-tun.md)
-- UKUI autostart failures, missing entries in Settings, `sort-app-list` / `statusMap` issues: [`references/ukui-autostart.md`](references/ukui-autostart.md)
-- Taskbar/tray AI assistant, AI subsystem cleanup, Kaiming AI assistant, and `kylin-ai-memorymap` box residue: [`references/kylin-ai-subsystem.md`](references/kylin-ai-subsystem.md)
-- Root partition, DATA partition, `/home` mounts, PanShi/ostree/overlay/KARE merged views, and disk usage interpretation: [`references/storage-layout.md`](references/storage-layout.md)
-- Codex user-level config, default full access, permission display, and maintenance-mode/root permission boundaries: [`references/codex-config.md`](references/codex-config.md)
-- Multi-tool global prompt entry points for Codex, Claude Code, opencode, AI-install prompt, and progressive loading template: [`references/agent-global-prompts.md`](references/agent-global-prompts.md)
-
 ## Installation
 
 This repository is not a directly executable program. It is a reusable system troubleshooting skill for AI coding tools. The recommended workflow is: clone it under your home directory, then configure your AI tool's user-level global prompt to read `SKILL.md` whenever you are working on KylinOS Desktop V11 system issues.
@@ -115,6 +94,27 @@ Clash Verge cannot install TUN mode. Please diagnose it.
 ```
 
 The AI tool should read `SKILL.md`, selectively load the relevant `references/*.md`, and follow the flow: diagnosis -> repair -> verification -> record reusable findings.
+
+## Core Requirements
+
+When using this skill for system troubleshooting, the AI tool must follow these baseline rules:
+
+- Read [`SKILL.md`](SKILL.md) first, then selectively read the relevant `references/*.md` files listed there; do not preload every reference file.
+- Follow the loop: diagnosis -> repair -> verification -> record reusable findings.
+- Before system-level repairs, run `mm-cli -s` to check maintenance mode; outside maintenance mode, only perform non-destructive diagnostics such as reading state or simulating installs/removals.
+- If the system is not in maintenance mode, enter maintenance mode and ask the user to reboot; after the fix is complete, exit maintenance mode and ask the user to reboot again to return to normal mode.
+- Do not delete, move, or overwrite existing executables, configs, subscription files, proxy cores, systemd units, or user data unless the user explicitly asks and the impact has been verified.
+- After a fix is confirmed, record reusable diagnosis steps, repair steps, risks, or system traits in `SKILL.md` or the relevant `references/*.md` file.
+- When running any `git commit`, do not include AI-related author, co-author, generator, or assistant attribution in the commit author, commit body, or commit trailers.
+
+## Supported Issues
+
+- Clash Verge Rev TUN mode, `clash-verge-service`, `/dev/net/tun`, and missing or misplaced `verge-mihomo`: [`references/clash-verge-tun.md`](references/clash-verge-tun.md)
+- UKUI autostart failures, missing entries in Settings, `sort-app-list` / `statusMap` issues: [`references/ukui-autostart.md`](references/ukui-autostart.md)
+- Taskbar/tray AI assistant, AI subsystem cleanup, Kaiming AI assistant, and `kylin-ai-memorymap` box residue: [`references/kylin-ai-subsystem.md`](references/kylin-ai-subsystem.md)
+- Root partition, DATA partition, `/home` mounts, PanShi/ostree/overlay/KARE merged views, and disk usage interpretation: [`references/storage-layout.md`](references/storage-layout.md)
+- Codex user-level config, default full access, permission display, and maintenance-mode/root permission boundaries: [`references/codex-config.md`](references/codex-config.md)
+- Multi-tool global prompt entry points for Codex, Claude Code, opencode, AI-install prompt, and progressive loading template: [`references/agent-global-prompts.md`](references/agent-global-prompts.md)
 
 ## Safety
 

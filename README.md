@@ -4,27 +4,6 @@
 
 用于沉淀和复用 KylinOS Desktop V11 桌面系统问题的诊断、修复与验证经验，覆盖 UKUI、KARE/Kaiming、TUN、开机自启动、维护模式、磐石架构、系统服务、分区挂载和 overlay 等场景。
 
-## 核心基础要求
-
-使用这个 skill 处理系统问题时，AI 工具必须遵守以下基础要求：
-
-- 先读取 [`SKILL.md`](SKILL.md)，再根据其中“参考文档”按需读取具体 `references/*.md`；不要一次性预加载所有 reference。
-- 按“诊断 -> 修复 -> 验证 -> 沉淀经验”的闭环处理问题。
-- 执行系统级修复前必须运行 `mm-cli -s` 检查维护模式；非维护模式只允许诊断、读取状态、模拟安装/卸载等非破坏操作。
-- 如果当前不是维护模式，应先进入维护模式并要求用户重启；修复完成后，应退出维护模式并要求用户再次重启回到 normal mode。
-- 不要删除、移动或覆盖用户已有的可执行文件、配置文件、订阅文件、代理核心、systemd 单元或用户数据，除非用户明确要求且已验证影响。
-- 问题确认修复后，如果产生新的可复用诊断步骤、修复步骤、风险点或系统特性，应更新到 `SKILL.md` 或对应 `references/*.md`。
-- 执行任何 `git commit` 时，提交作者、提交正文和提交 trailer 不得包含 AI 相关署名或协作生成信息。
-
-## 能处理的问题
-
-- Clash Verge Rev TUN 模式、`clash-verge-service`、`/dev/net/tun`、`verge-mihomo` 路径或核心丢失问题：[`references/clash-verge-tun.md`](references/clash-verge-tun.md)
-- UKUI 开机自启动不生效、设置界面不显示新增启动项、`sort-app-list` / `statusMap` 异常：[`references/ukui-autostart.md`](references/ukui-autostart.md)
-- 任务栏/托盘 AI 助手、AI 子系统、Kaiming AI 助手、`kylin-ai-memorymap` 文件保护箱残留清理：[`references/kylin-ai-subsystem.md`](references/kylin-ai-subsystem.md)
-- 根分区、DATA 分区、`/home` 挂载、磐石架构/ostree/overlay/KARE 合并视图、空间占用判断：[`references/storage-layout.md`](references/storage-layout.md)
-- Codex 用户级配置、默认 full access、权限显示、维护模式/root 权限边界：[`references/codex-config.md`](references/codex-config.md)
-- Codex、Claude Code、opencode 等多工具全局提示词入口、自动安装提示词、渐进式披露加载模板：[`references/agent-global-prompts.md`](references/agent-global-prompts.md)
-
 ## 安装方式
 
 这个仓库不是一个直接运行的程序，而是一组给 AI 编程工具读取的“系统问题处理经验”。推荐用法是：把仓库放到用户目录，然后在 Codex、Claude Code、opencode 等工具的全局提示词里告诉它们遇到 KylinOS Desktop V11 系统问题时先读取这里的 `SKILL.md`。
@@ -115,6 +94,27 @@ Clash Verge 无法安装 TUN 模式，请帮我诊断。
 ```
 
 AI 工具应先读取 `SKILL.md`，再按需读取相关 `references/*.md`，然后按“诊断 -> 修复 -> 验证 -> 记录经验”的流程处理。
+
+## 核心基础要求
+
+使用这个 skill 处理系统问题时，AI 工具必须遵守以下基础要求：
+
+- 先读取 [`SKILL.md`](SKILL.md)，再根据其中“参考文档”按需读取具体 `references/*.md`；不要一次性预加载所有 reference。
+- 按“诊断 -> 修复 -> 验证 -> 沉淀经验”的闭环处理问题。
+- 执行系统级修复前必须运行 `mm-cli -s` 检查维护模式；非维护模式只允许诊断、读取状态、模拟安装/卸载等非破坏操作。
+- 如果当前不是维护模式，应先进入维护模式并要求用户重启；修复完成后，应退出维护模式并要求用户再次重启回到 normal mode。
+- 不要删除、移动或覆盖用户已有的可执行文件、配置文件、订阅文件、代理核心、systemd 单元或用户数据，除非用户明确要求且已验证影响。
+- 问题确认修复后，如果产生新的可复用诊断步骤、修复步骤、风险点或系统特性，应更新到 `SKILL.md` 或对应 `references/*.md`。
+- 执行任何 `git commit` 时，提交作者、提交正文和提交 trailer 不得包含 AI 相关署名或协作生成信息。
+
+## 能处理的问题
+
+- Clash Verge Rev TUN 模式、`clash-verge-service`、`/dev/net/tun`、`verge-mihomo` 路径或核心丢失问题：[`references/clash-verge-tun.md`](references/clash-verge-tun.md)
+- UKUI 开机自启动不生效、设置界面不显示新增启动项、`sort-app-list` / `statusMap` 异常：[`references/ukui-autostart.md`](references/ukui-autostart.md)
+- 任务栏/托盘 AI 助手、AI 子系统、Kaiming AI 助手、`kylin-ai-memorymap` 文件保护箱残留清理：[`references/kylin-ai-subsystem.md`](references/kylin-ai-subsystem.md)
+- 根分区、DATA 分区、`/home` 挂载、磐石架构/ostree/overlay/KARE 合并视图、空间占用判断：[`references/storage-layout.md`](references/storage-layout.md)
+- Codex 用户级配置、默认 full access、权限显示、维护模式/root 权限边界：[`references/codex-config.md`](references/codex-config.md)
+- Codex、Claude Code、opencode 等多工具全局提示词入口、自动安装提示词、渐进式披露加载模板：[`references/agent-global-prompts.md`](references/agent-global-prompts.md)
 
 ## 安全边界
 
