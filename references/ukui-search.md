@@ -54,6 +54,8 @@ libsearch/websearch/web-search-plugin.cpp
 
 要真正新增 Bing/Google，不应只改 gsettings，也不应只补图标；需要同时修改设置插件下拉框和后端 URL 映射，然后以与当前系统包匹配的版本重新构建、安装。没有当前系统包的精确源码和构建依赖时，不建议通过二进制字符串 patch 或替换共享库来处理，因为这会影响 UKUI 全局搜索和控制中心稳定性。
 
+如果需要进入源码级修改，继续读取源码重编译知识库：[../knowledge/source-rebuild/ukui-search-web-engine.md](../knowledge/source-rebuild/ukui-search-web-engine.md)。该知识库记录源码匹配、最小补丁位置、构建依赖、ABI/RPATH 验证和“不应安装”的判定条件。
+
 判断源码是否与当前系统包精确匹配时，先看本机二进制包版本：
 
 ```bash

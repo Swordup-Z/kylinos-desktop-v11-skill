@@ -2,7 +2,7 @@
 
 [English](README.en.md)
 
-用于沉淀和复用 KylinOS Desktop V11 桌面系统问题的诊断、修复与验证经验，覆盖应用安装与包管理、UKUI、KARE/Kaiming、Clash Verge TUN、开机自启动、维护模式、磐石架构、系统服务、图形/频率、托盘、全局搜索、AI 子系统、分区挂载、overlay、系统噪声清理和 AI 工具全局提示词等场景。
+用于沉淀和复用 KylinOS Desktop V11 桌面系统问题的诊断、修复与验证经验，覆盖应用安装与包管理、UKUI、KARE/Kaiming、Clash Verge TUN、开机自启动、维护模式、磐石架构、系统服务、图形/频率、托盘、全局搜索、需要源码重编译的系统组件修复评估、AI 子系统、分区挂载、overlay、系统噪声清理和 AI 工具全局提示词等场景。
 
 ## 安装方式
 
@@ -120,6 +120,7 @@ AI 工具应先读取 `SKILL.md`，再按需读取相关 `references/*.md`，然
 
 - 只要任务涉及 KylinOS Desktop V11 桌面系统维护场景，就先读取 [`SKILL.md`](SKILL.md)，再根据其中“参考文档”按需读取具体 `references/*.md`；不要一次性预加载所有 reference。
 - 如果没有命中专门 reference，至少读取通用系统维护文档 [`references/system-maintenance.md`](references/system-maintenance.md)。
+- 如果问题需要重新编译系统源码包、替换系统共享库或评估 ABI/SONAME/依赖/RPATH 风险，先读取具体场景 reference，再读取 [`knowledge/source-rebuild/README.md`](knowledge/source-rebuild/README.md)。
 - 普通代码开发、文档编辑、Git 操作或其他无关任务不要加载该 skill。
 - 按“诊断 -> 修复 -> 验证 -> 沉淀经验”的闭环处理问题。
 - 系统问题默认以持久化修复为目标；临时止血后，还要确认重启、重新登录、服务重拉起或应用重启后是否仍然有效。
@@ -169,6 +170,7 @@ AI 工具应先读取 `SKILL.md`，再按需读取相关 `references/*.md`，然
 - UKUI 开机自启动不生效、设置界面不显示新增启动项、原始 `.desktop` 修复、图标解析、`sort-app-list` / `statusMap` 异常：[`references/ukui-autostart.md`](references/ukui-autostart.md)
 - UKUI 全局快捷键冲突、设置界面提示快捷键被系统占用、全局搜索快捷键、`Alt+Space` 与窗口菜单冲突：[`references/ukui-keybindings.md`](references/ukui-keybindings.md)
 - UKUI 全局搜索结果来源、应用商店未安装应用结果、软件商店搜索 D-Bus 插件屏蔽与回滚：[`references/ukui-search.md`](references/ukui-search.md)
+- UKUI 全局搜索默认互联网搜索引擎写死、需要通过源码级修改添加 Bing/Google 等选项时的源码匹配、构建和 ABI 风险评估：[`knowledge/source-rebuild/ukui-search-web-engine.md`](knowledge/source-rebuild/ukui-search-web-engine.md)
 - UKUI 右侧托盘小图标顺序和隐藏区不持久、`systemTray.json`、`orderedItems`、`separateIndex`：[`references/ukui-system-tray.md`](references/ukui-system-tray.md)
 - `ukui-system-service-manager.service` 反复 timeout、`QDBusError("", "")`、`org.ukui.serviceManager` 被孤儿进程占用、D-Bus activation 持久化修复：[`references/ukui-system-service-manager.md`](references/ukui-system-service-manager.md)
 - 任务栏/托盘 AI 助手、AI 子系统、Kaiming AI 助手卸载边界和残留清理：[`references/kylin-ai-subsystem.md`](references/kylin-ai-subsystem.md)
