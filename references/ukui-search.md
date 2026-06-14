@@ -56,6 +56,26 @@ libsearch/websearch/web-search-plugin.cpp
 
 如果只是希望临时使用不同搜索引擎，可考虑浏览器扩展或浏览器侧搜索重定向，但这不等同于在 UKUI 设置界面新增正式选项。
 
+### 能否交给默认浏览器的默认搜索引擎
+
+通常不能直接做到。UKUI 全局搜索的后端不是把“纯关键词”交给默认浏览器，而是先根据 `web-engine` 拼出完整搜索 URL，再让默认浏览器打开。例如：
+
+```text
+https://www.so.com/s?q=<keyword>
+https://www.sogou.com/web?query=<keyword>
+https://baidu.com/s?word=<keyword>
+```
+
+浏览器只有在地址栏收到纯文本查询时，才会使用自身默认搜索引擎；如果外部程序传入的是完整 `https://...` URL，浏览器默认搜索引擎不会参与。
+
+可选变通方案：
+
+- 浏览器侧重定向：安装重定向扩展，把 `baidu.com/s?word=...`、`sogou.com/web?query=...` 或 `so.com/s?q=...` 转到 Bing/Google。这不改 UKUI，但依赖浏览器扩展。
+- 用户级默认浏览器拦截器：把默认浏览器改成一个用户级脚本，只拦截这几类搜索 URL 并转换后再调用真实浏览器。此方案会改变默认浏览器入口，影响面比浏览器扩展更大，需谨慎验证。
+- 源码级修复：修改 UKUI 后端，让它支持 Bing/Google，或改成传纯关键词给浏览器/自定义搜索服务。这是最完整但成本最高的方案。
+
+不建议通过改 `/etc/hosts`、DNS 劫持或二进制字符串替换来实现搜索引擎切换；前者处理不了 HTTPS 证书和路径参数，后者容易破坏 `libukui-search` 或控制中心插件。
+
 确认软件商店搜索结果提供者：
 
 ```bash
