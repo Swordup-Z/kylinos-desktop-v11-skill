@@ -97,13 +97,41 @@ The AI tool should read `SKILL.md`, selectively load the relevant `references/*.
 
 ## Safety
 
-System-level repairs on KylinOS Desktop V11 may require maintenance mode. Before modifying `/usr`, `/etc`, `/opt`, system packages, services, device nodes, partitions, or KSaf policy, check:
+System-level repairs on KylinOS Desktop V11 usually require maintenance mode. Before modifying `/usr`, `/etc`, `/opt`, system packages, services, device nodes, partitions, or KSaf policy, always check the current mode:
 
 ```bash
 mm-cli -s
 ```
 
 Only proceed with system-level changes after confirming maintenance mode.
+
+If the system is not in maintenance mode, do not continue with system modifications. First enter maintenance mode:
+
+```bash
+sudo mm-cli -o
+```
+
+Or, in a graphical/Polkit environment:
+
+```bash
+pkexec mm-cli -o
+```
+
+After that, reboot the system and reopen the AI tool to continue the repair. Before entering maintenance mode and rebooting, only perform non-destructive diagnostics such as reading state, checking logs, or simulating installs/removals.
+
+After the issue is fixed and verified, save changes and exit maintenance mode:
+
+```bash
+sudo mm-cli -c -a
+```
+
+Or:
+
+```bash
+pkexec mm-cli -c -a
+```
+
+Exiting maintenance mode usually also requires another reboot. The system returns to normal mode only after that reboot. Do not leave the system in maintenance mode long-term.
 
 ## License
 
