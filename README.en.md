@@ -2,7 +2,7 @@
 
 [中文](README.md)
 
-A reusable skill and knowledge base for diagnosing, fixing, verifying, and recording KylinOS Desktop V11 system issues. It covers UKUI, KARE/Kaiming, Clash Verge TUN, autostart, maintenance mode, system services, graphics/frequency issues, tray behavior, AI subsystem cleanup, partitions, mounts, overlay views, system-noise cleanup, global prompts for AI tools, and the PanShi system architecture.
+A reusable skill and knowledge base for diagnosing, fixing, verifying, and recording KylinOS Desktop V11 system issues. It covers application installation and package management, UKUI, KARE/Kaiming, Clash Verge TUN, autostart, maintenance mode, system services, graphics/frequency issues, tray behavior, AI subsystem cleanup, partitions, mounts, overlay views, system-noise cleanup, global prompts for AI tools, and the PanShi system architecture.
 
 ## Installation
 
@@ -128,6 +128,7 @@ When using this skill for system troubleshooting, the AI tool must follow these 
 - Do not delete, move, or overwrite existing executables, configs, subscription files, proxy cores, systemd units, or user data unless the user explicitly asks and the impact has been verified.
 - After a fix is confirmed, record reusable diagnosis steps, repair steps, risks, or system traits in `SKILL.md` or the relevant `references/*.md` file.
 - If the resolved KylinOS Desktop V11 system issue was not previously covered by this skill, add an appropriate `references/*.md` file or extend an existing reference, then link it from `SKILL.md`.
+- Before running `git commit` in this repository, check whether `README.md` and `README.en.md` need to be updated. If the change affects installation, core requirements, supported issue coverage, reference entry points, safety boundaries, global prompts, or the public usage workflow, update the READMEs in the same commit.
 - When running any `git commit`, do not include AI-related author, co-author, generator, or assistant attribution in the commit author, commit body, or commit trailers.
 
 ## Supported Issues
@@ -138,8 +139,24 @@ The skill currently covers the issue types below. Each item links to its referen
 
 - Maintenance-mode checks, entering/exiting maintenance mode, and `mm-cli -s` / `mm-cli -o` / `mm-cli -c -a` boundaries: [`references/system-maintenance.md`](references/system-maintenance.md)
 - Safe flow before command-line installs or writes to `/usr`, `/etc`, `/opt`, systemd units, device nodes, or system packages under the PanShi architecture: [`references/system-maintenance.md`](references/system-maintenance.md)
-- System-noise cleanup after full health checks, including `motd-news.service`, missing `pam_gnome_keyring.so`, and legacy rsyslog `$IMJournalStateFile` directives: [`references/system-maintenance.md`](references/system-maintenance.md)
 - The minimal loop for uncovered issues: diagnosis -> repair -> verification -> reusable finding capture: [`references/system-maintenance.md`](references/system-maintenance.md)
+
+### System Health Checks And Noise Cleanup
+
+- System-noise cleanup after full health checks, including `motd-news.service`, missing `pam_gnome_keyring.so`, and legacy rsyslog `$IMJournalStateFile` directives: [`references/system-health-noise.md`](references/system-health-noise.md)
+
+### Application Installation And Package Management
+
+- Host-side command-line installs, KARE mis-install detection, and whether an application entry comes from KARE or the host: [`references/application-installation.md`](references/application-installation.md)
+- User-level AppImage installs, ARM64/x86-64 architecture checks, desktop entries, user icon-theme caches, and UKUI start-menu icon issues: [`references/application-installation.md`](references/application-installation.md)
+- AppImage `libfuse.so.2` failures, `libfuse2` installation, and verification: [`references/application-installation.md`](references/application-installation.md)
+- Stale third-party apt sources, missing signing keys, `NO_PUBKEY`, and source cleanup after the user chooses to remove an application: [`references/application-installation.md`](references/application-installation.md)
+
+### KARE And Host Boundaries
+
+- KARE namespaces, applications showing hostname as `kare`, host hostname validation, and KARE base-environment risks: [`references/kare-namespace.md`](references/kare-namespace.md)
+- KARE desktop-entry overrides, pinned menu entries still pointing to KARE, and host-native entry validation: [`references/kare-namespace.md`](references/kare-namespace.md)
+- Recovery after accidentally starting the UKUI panel from a KARE environment, including namespace validation: [`references/kare-namespace.md`](references/kare-namespace.md)
 
 ### Network Proxy And Clash Verge
 
@@ -153,6 +170,10 @@ The skill currently covers the issue types below. Each item links to its referen
 - UKUI right-side system tray icon order and folded/hidden area persistence, `systemTray.json`, `orderedItems`, and `separateIndex`: [`references/ukui-system-tray.md`](references/ukui-system-tray.md)
 - `ukui-system-service-manager.service` repeated timeouts, `QDBusError("", "")`, `org.ukui.serviceManager` owned by an orphan process, and persistent D-Bus activation repair: [`references/ukui-system-service-manager.md`](references/ukui-system-service-manager.md)
 - Taskbar/tray AI assistant, AI subsystem cleanup, Kaiming AI assistant removal boundaries, and residue cleanup: [`references/kylin-ai-subsystem.md`](references/kylin-ai-subsystem.md)
+
+### Fingerprint And Biometrics
+
+- `GW_Fingerprint_PA` fingerprint driver recovery, Pixelauth T350P package installation, `biometric-authentication.service` validation, and diagnostics for registered drivers whose devices are not detected: [`references/biometric-fingerprint.md`](references/biometric-fingerprint.md)
 
 ### Graphics, Frequency, And Hardware-Specific Stability
 

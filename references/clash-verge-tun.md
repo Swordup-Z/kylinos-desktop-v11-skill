@@ -6,6 +6,16 @@
 ~/.local/share/io.github.clash-verge-rev.clash-verge-rev
 ```
 
+## 目录
+
+- 安全规则
+- 诊断
+- 修复 TUN 设备
+- 安装 Clash Verge 服务
+- 在 Clash Verge 中启用 TUN
+- 如果代理组消失
+- 最终验证
+
 ## 安全规则
 
 - 不要删除、移动或覆盖任何已有的 `mihomo`、`verge-mihomo`、`clash`、`clash-verge` 可执行文件。

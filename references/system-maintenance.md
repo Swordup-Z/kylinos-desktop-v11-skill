@@ -2,6 +2,17 @@
 
 此文档适用于所有 KylinOS Desktop V11 系统级问题。即使具体问题尚未被其他 reference 覆盖，也应先读取本文件，确认维护模式、系统保护边界和最小诊断闭环。
 
+## 目录
+
+- 适用场景
+- 基础流程
+- 维护模式检查
+- 退出维护模式
+- 诊断优先
+- 持久化修复优先
+- 场景化参考文档
+- 未覆盖问题的经验沉淀
+
 ## 适用场景
 
 - 用户问题涉及系统服务、系统包、设备节点、网络路由、系统路径、桌面环境、KARE/Kaiming、分区挂载、磐石架构、KSaf 策略或系统保护。
@@ -44,6 +55,8 @@ pkexec mm-cli -o
 
 进入维护模式后需要重启系统，重启后重新打开 AI 工具再继续修复。在进入维护模式并重启前，只允许诊断、读取状态、查看日志、模拟安装/卸载等非破坏操作。
 
+应用安装、AppImage、KARE 环境误装、第三方 apt 源和公钥问题属于安装/包管理知识，应读取 [application-installation.md](application-installation.md)，不要把具体安装步骤继续追加到本文档。
+
 ## 退出维护模式
 
 系统级修改完成并验证后，退出维护模式并保存修改：
@@ -59,6 +72,15 @@ pkexec mm-cli -c -a
 ```
 
 退出维护模式后通常还需要重启系统。重启后再确认系统已回到 normal mode。
+
+在部分环境中，`mm-cli -c -a` 前台可能返回“退出维护模式失败”，但后台日志已经写入下一次启动进入 normal mode。遇到这种不一致时，不要反复执行破坏性操作，先查日志确认真实状态：
+
+```bash
+journalctl -b --no-pager | rg -i 'mm-cli|maintain mode|normal mode|Next time'
+mm-cli -s
+```
+
+如果日志包含类似 `Next time will in normal mode`，说明当前启动仍显示 maintain mode 是预期现象，需要重启后再验证 `mm-cli -s` 是否变为 normal mode。
 
 ## 诊断优先
 
@@ -94,74 +116,13 @@ journalctl -u <service-name> -n 100 --no-pager
 
 如果只能做临时止血，应明确告诉用户剩余的持久化风险和下一步验证方式。
 
-## 常见系统噪声清理
+## 场景化参考文档
 
-全盘体检时，不要只看 `systemctl --failed` 的数量，还要结合服务用途判断是否影响桌面启动。对明确无用或缺依赖的系统噪声，优先做小范围、可回滚的持久化修复。
+本文档只保留系统级修复的底座规则。具体场景应继续按需读取对应 reference：
 
-### `motd-news.service`
-
-`motd-news.service` 用于终端登录时的 Message of the Day 新闻/公告，不是桌面环境核心组件。若用户不需要新闻/公告，或 `/etc/update-motd.d/50-motd-news` 缺失导致 `status=203/EXEC`，可以禁用定时器并清理失败状态：
-
-```bash
-systemctl status motd-news.timer motd-news.service --no-pager
-sudo systemctl disable --now motd-news.timer
-sudo systemctl reset-failed motd-news.service
-systemctl --failed --no-pager
-```
-
-不要直接删除 `/usr/lib/systemd/system/*.service`；这些文件属于软件包管理范围。
-
-### PAM 引用缺失的 `pam_gnome_keyring.so`
-
-如果日志中反复出现：
-
-```text
-PAM unable to dlopen(pam_gnome_keyring.so)
-PAM adding faulty module: pam_gnome_keyring.so
-```
-
-先确认 PAM 配置和包状态：
-
-```bash
-rg -n 'pam_gnome_keyring' /etc/pam.d /usr/share/pam-configs 2>/dev/null
-dpkg -S pam_gnome_keyring.so 2>/dev/null || true
-apt-cache policy libpam-gnome-keyring gnome-keyring
-```
-
-如果 `gnome-keyring` 已安装但 `libpam-gnome-keyring` 未安装，优先安装缺失的 PAM 模块，保留登录/锁屏时解锁 keyring 的原有设计：
-
-```bash
-sudo apt-get install libpam-gnome-keyring
-dpkg -L libpam-gnome-keyring | rg 'pam_gnome_keyring\.so|/security/'
-```
-
-只有在明确不需要 gnome-keyring 集成时，才考虑把对应 PAM 行改成缺失模块可静默忽略的写法或移除该引用。修改 PAM 文件前必须备份。
-
-### rsyslog 旧式 imjournal 指令
-
-如果 `rsyslog.service` 启动时出现：
-
-```text
-invalid or yet-unknown config file command 'IMJournalStateFile'
-```
-
-检查 `/etc/rsyslog.conf` 是否存在 `$IMJournalStateFile imjournal.state`，但没有加载 `imjournal` 模块：
-
-```bash
-rg -n 'IMJournalStateFile|imjournal' /etc/rsyslog.conf /etc/rsyslog.d 2>/dev/null
-```
-
-在 KylinOS Desktop V11 上，rsyslog 常见配置是通过 `imuxsock` 从 systemd journal 的 syslog socket 收日志；若没有启用 `imjournal`，应注释该旧式指令，而不是额外启用 `imjournal` 造成日志重复。修改前备份，修改后验证语法并重启：
-
-```bash
-sudo sed -i.bak-<date> \
-  -e '/^\$IMJournalStateFile imjournal\.state$/i # Disabled: imjournal is not loaded.' \
-  -e 's/^\$IMJournalStateFile imjournal\.state$/# $IMJournalStateFile imjournal.state/' \
-  /etc/rsyslog.conf
-sudo /usr/sbin/rsyslogd -N1
-sudo systemctl restart rsyslog.service
-journalctl -u rsyslog.service --since '5 minutes ago' --no-pager
-```
+- 应用安装、AppImage、KARE 环境误装、第三方 apt 源和公钥问题：读取 [application-installation.md](application-installation.md)。
+- KARE namespace、应用内 hostname 显示 `kare`、从 KARE 误启动 UKUI 面板、开始菜单固定项仍指向 KARE：读取 [kare-namespace.md](kare-namespace.md)。
+- 全盘体检后的系统噪声清理、`motd-news.service`、PAM 残留引用、rsyslog 旧式配置：读取 [system-health-noise.md](system-health-noise.md)。
 
 ## 未覆盖问题的经验沉淀
 

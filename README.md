@@ -2,7 +2,7 @@
 
 [English](README.en.md)
 
-用于沉淀和复用 KylinOS Desktop V11 桌面系统问题的诊断、修复与验证经验，覆盖 UKUI、KARE/Kaiming、Clash Verge TUN、开机自启动、维护模式、磐石架构、系统服务、图形/频率、托盘、AI 子系统、分区挂载、overlay、系统噪声清理和 AI 工具全局提示词等场景。
+用于沉淀和复用 KylinOS Desktop V11 桌面系统问题的诊断、修复与验证经验，覆盖应用安装与包管理、UKUI、KARE/Kaiming、Clash Verge TUN、开机自启动、维护模式、磐石架构、系统服务、图形/频率、托盘、AI 子系统、分区挂载、overlay、系统噪声清理和 AI 工具全局提示词等场景。
 
 ## 安装方式
 
@@ -128,6 +128,7 @@ AI 工具应先读取 `SKILL.md`，再按需读取相关 `references/*.md`，然
 - 不要删除、移动或覆盖用户已有的可执行文件、配置文件、订阅文件、代理核心、systemd 单元或用户数据，除非用户明确要求且已验证影响。
 - 问题确认修复后，如果产生新的可复用诊断步骤、修复步骤、风险点或系统特性，应更新到 `SKILL.md` 或对应 `references/*.md`。
 - 如果实际解决的是当前 skill 尚未覆盖的 KylinOS Desktop V11 系统问题，应新增合适的 `references/*.md` 或扩展现有参考文档，并在 `SKILL.md` 的“参考文档”中补充入口。
+- 在本仓库执行 `git commit` 前，必须检查 `README.md` 和 `README.en.md` 是否需要同步；如果变更影响安装方式、核心基础要求、支持的问题类型、参考文档入口、安全边界、全局提示词或公开使用流程，应在同次提交中更新 README。
 - 执行任何 `git commit` 时，提交作者、提交正文和提交 trailer 不得包含 AI 相关署名或协作生成信息。
 
 ## 能处理的问题
@@ -138,8 +139,24 @@ AI 工具应先读取 `SKILL.md`，再按需读取相关 `references/*.md`，然
 
 - 维护模式检查、进入/退出维护模式、`mm-cli -s` / `mm-cli -o` / `mm-cli -c -a` 使用边界：[`references/system-maintenance.md`](references/system-maintenance.md)
 - 磐石架构下命令行安装、写 `/usr`、`/etc`、`/opt`、systemd、设备节点前的安全流程：[`references/system-maintenance.md`](references/system-maintenance.md)
-- 全盘体检后的系统噪声清理，包括 `motd-news.service`、缺失 `pam_gnome_keyring.so`、rsyslog 旧式 `$IMJournalStateFile` 指令：[`references/system-maintenance.md`](references/system-maintenance.md)
 - 未覆盖的新系统问题如何按“诊断 -> 修复 -> 验证 -> 经验沉淀”闭环处理：[`references/system-maintenance.md`](references/system-maintenance.md)
+
+### 系统体检与噪声清理
+
+- 全盘体检后的系统噪声清理，包括 `motd-news.service`、缺失 `pam_gnome_keyring.so`、rsyslog 旧式 `$IMJournalStateFile` 指令：[`references/system-health-noise.md`](references/system-health-noise.md)
+
+### 应用安装与包管理
+
+- 宿主机命令行安装、KARE 环境误装判断、应用入口是否来自 KARE 或宿主机：[`references/application-installation.md`](references/application-installation.md)
+- AppImage 用户级安装、ARM64/x86-64 架构检查、桌面入口、用户级图标主题缓存和 UKUI 开始菜单图标异常：[`references/application-installation.md`](references/application-installation.md)
+- AppImage 缺少 `libfuse.so.2`、`libfuse2` 安装与验证：[`references/application-installation.md`](references/application-installation.md)
+- 第三方 apt 源残留、公钥缺失、`NO_PUBKEY`、用户明确删除应用后的源配置清理：[`references/application-installation.md`](references/application-installation.md)
+
+### KARE 与宿主机边界
+
+- KARE namespace、应用内 hostname 显示 `kare`、宿主机 hostname 验证和 KARE base 环境风险：[`references/kare-namespace.md`](references/kare-namespace.md)
+- KARE 桌面入口覆盖、开始菜单固定项仍指向 KARE、宿主机原生入口验证：[`references/kare-namespace.md`](references/kare-namespace.md)
+- 从 KARE 环境误启动 UKUI 面板后的恢复与 namespace 验证：[`references/kare-namespace.md`](references/kare-namespace.md)
 
 ### 网络代理与 Clash Verge
 
@@ -153,6 +170,10 @@ AI 工具应先读取 `SKILL.md`，再按需读取相关 `references/*.md`，然
 - UKUI 右侧托盘小图标顺序和隐藏区不持久、`systemTray.json`、`orderedItems`、`separateIndex`：[`references/ukui-system-tray.md`](references/ukui-system-tray.md)
 - `ukui-system-service-manager.service` 反复 timeout、`QDBusError("", "")`、`org.ukui.serviceManager` 被孤儿进程占用、D-Bus activation 持久化修复：[`references/ukui-system-service-manager.md`](references/ukui-system-service-manager.md)
 - 任务栏/托盘 AI 助手、AI 子系统、Kaiming AI 助手卸载边界和残留清理：[`references/kylin-ai-subsystem.md`](references/kylin-ai-subsystem.md)
+
+### 指纹与生物识别
+
+- `GW_Fingerprint_PA` 指纹驱动恢复、Pixelauth T350P 包安装、`biometric-authentication.service` 验证、驱动已注册但设备未发现的诊断：[`references/biometric-fingerprint.md`](references/biometric-fingerprint.md)
 
 ### 图形、频率与硬件相关稳定性
 

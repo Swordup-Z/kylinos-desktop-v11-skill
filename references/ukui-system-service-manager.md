@@ -2,6 +2,15 @@
 
 此流程用于 KylinOS Desktop V11/UKUI 上 `ukui-system-service-manager.service` 反复启动超时、日志出现 `QDBusError("", "")`、`org.ukui.serviceManager` D-Bus 名称被孤儿进程占用等问题。
 
+## 目录
+
+- 关键结论
+- 诊断
+- 修复
+- 持久化修复
+- 验证
+- 与卡死问题的关联排查
+
 ## 关键结论
 
 - `ukui-system-service-manager.service` 是 `Type=dbus` 服务，正式 D-Bus 名称是 `org.ukui.serviceManager`。

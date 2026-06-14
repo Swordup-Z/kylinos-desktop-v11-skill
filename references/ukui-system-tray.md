@@ -2,6 +2,14 @@
 
 此流程用于 KylinOS Desktop V11/UKUI 上“任务栏右侧小图标位置或隐藏区规则重启应用/重启系统后不保留”的问题。这里的小图标指系统托盘/StatusNotifier 图标，不是左侧固定应用大图标。
 
+## 目录
+
+- 关键结论
+- 检查当前托盘配置
+- 修复排序不保留
+- 验证
+- 排查被覆盖
+
 ## 关键结论
 
 - UKUI 右侧托盘配置保存在用户级文件 `$HOME/.config/org.ukui/_ukui-config-global/org.ukui.systemTray.json`。
