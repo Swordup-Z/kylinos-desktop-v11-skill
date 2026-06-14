@@ -158,4 +158,47 @@ mm-cli -c -a
 
 ## 已验证经验
 
-在一次 KylinOS Desktop V11 环境中，使用公开上游 `ukui-search` 的接近 tag 可以成功编译出包含 Bing/Google 字符串的产物，并可通过 `CMAKE_SKIP_RPATH=ON` 去掉构建目录 `RUNPATH`。但新 `libukui-search.so.2.3.0` 与系统现有库存在导出符号差异：系统库 1669 个导出符号，新库 1663 个；系统有而新库没有 20 个，新库有而系统没有 14 个。差异涉及构造函数签名、内部类方法和 `LogUtils` 命名空间变化。结论是：公开上游接近 tag 可用于验证补丁位置和构建链路，但不能在 ABI 不一致时直接替换系统库。
+在一次 KylinOS Desktop V11 环境中，使用公开上游 `ukui-search` 的接近 tag 可以成功编译出包含 Bing/Google 字符串的产物，并可通过 `CMAKE_SKIP_RPATH=ON` 去掉构建目录 `RUNPATH`。但新 `libukui-search.so.2.3.0` 与系统现有库存在导出符号差异：系统库 1669 个导出符号，新库 1663 个；系统有而新库没有 20 个，新库有而系统没有 14 个。差异涉及构造函数签名、内部类方法和 `LogUtils` 命名空间变化。
+
+在用户明确要求本地试装后，先保留 stripped 安装产物、未裁剪构建产物、系统原文件备份、校验和和 `restore.sh`，再替换以下两个文件：
+
+```text
+/usr/lib/<arch>/libukui-search.so.2.3.0
+/usr/lib/<arch>/ukui-control-center/libsearch-ukcc-plugin.so
+```
+
+替换后执行 `ukui-search --quit` 立即触发：
+
+```text
+symbol lookup error: ukui-search: undefined symbol: UkuiSearch::LogUtils::messageOutput(...)
+```
+
+随后执行回滚脚本恢复原系统文件，`dpkg -V libukui-search2 ukui-search` 无输出，说明包文件校验恢复正常。结论是：公开上游接近 tag 可用于验证补丁位置和构建链路，但当前已确认不能替换本机系统库；必须寻找精确源码包或当前发行版对应补丁源。
+
+进一步尝试将同一源码 tag 构建成完整 `.deb` 包，并以本地包集合方式从发行版版本 `<version>-ok0.1k0.22` 降级到公开 tag 版本 `<version>-ok0.1`。必须作为同源集合一起安装的运行时包包括：
+
+```text
+libchinese-segmentation-common
+libchinese-segmentation1
+libukui-search-common
+libukui-search2
+ukui-search-systemdbus
+ukui-search-service
+ukui-search
+```
+
+该整组降级可以避免“旧 `ukui-search` 加载新 `libukui-search`”导致的 `undefined symbol`，但前端启动时出现新的桌面协议兼容错误：
+
+```text
+wl_display#1: error 1: invalid method 3, object org_kde_kwin_blur#...
+```
+
+这说明公开 tag 版本的 `ukui-search` 前端和当前 KylinOS Desktop V11 的 UKUI/Wayland 组件仍不兼容。结论：不能通过整组降级到公开 tag 的方式解决当前系统；应回滚到发行版仓库版本，并继续寻找精确源码包或发行版补丁源。若试装过本地降级包，回滚后用以下方式确认恢复：
+
+```bash
+dpkg-query -W -f='${binary:Package} ${Version}\n' ukui-search ukui-search-service ukui-search-systemdbus libukui-search2 libukui-search-common libchinese-segmentation1 libchinese-segmentation-common
+dpkg -V ukui-search ukui-search-service ukui-search-systemdbus libukui-search2 libukui-search-common libchinese-segmentation1 libchinese-segmentation-common
+apt-mark showhold
+```
+
+`dpkg -V` 应无输出，相关包不应继续处于 hold 状态。
