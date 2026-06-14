@@ -7,6 +7,7 @@
 - 全局搜索结果中出现应用商店里的未安装应用，用户希望只显示本机应用或本地结果。
 - 设置界面的全局搜索选项没有提供对应开关。
 - 需要区分文件索引、AI 索引、本机应用索引和软件商店在线/商店结果来源。
+- 设置界面的“默认互联网搜索引擎”只提供少数固定选项，用户希望添加 Bing、Google 等搜索引擎。
 
 快捷键冲突、`Alt+Space` 等问题应读取 [ukui-keybindings.md](ukui-keybindings.md)。
 
@@ -19,6 +20,41 @@ gsettings list-recursively org.ukui.search.settings
 ```
 
 其中 `ai-index-enable` 只表示 AI 索引服务开关，不等同于“是否显示应用商店里的未安装应用”。如果它已经是 `false`，全局搜索仍显示商店应用，继续检查软件商店搜索插件。
+
+## 互联网搜索引擎选项
+
+先确认当前 `web-engine` 配置：
+
+```bash
+gsettings list-recursively org.ukui.search.settings
+gsettings range org.ukui.search.settings web-engine
+gsettings describe org.ukui.search.settings web-engine
+```
+
+`web-engine` 通常是普通字符串 key，不是枚举类型；但这不代表任意字符串都会被后端识别。继续检查设置插件和后端库：
+
+```bash
+strings /usr/lib/*/ukui-control-center/libsearch-ukcc-plugin.so | rg -n -C 5 'Default web searching engine|combobox of web search engine|baidu|sougou|360|google|bing'
+strings /usr/lib/*/libukui-search* 2>/dev/null | rg -n -C 4 'baidu|sougou|360|google|bing|https://www.so.com|https://www.sogou.com|https://baidu.com'
+dpkg -S /usr/lib/*/ukui-control-center/libsearch-ukcc-plugin.so /usr/lib/*/libukui-search.so.2 2>/dev/null
+```
+
+常见情况：
+
+- `libsearch-ukcc-plugin.so` 负责设置界面下拉框，选项可能写死为 `baidu`、`sougou`、`360`。
+- `libukui-search.so.2` 负责实际打开网页搜索 URL，后端可能只包含 360、搜狗、百度 URL。
+- `gsettings set org.ukui.search.settings web-engine google` 这类方式即使能写入字符串，也可能被后端当作默认分支处理，实际仍打开百度。
+
+如果源码可用，可从源码确认两个关键位置：
+
+```text
+search-ukcc-plugin/search.cpp
+libsearch/websearch/web-search-plugin.cpp
+```
+
+要真正新增 Bing/Google，不应只改 gsettings，也不应只补图标；需要同时修改设置插件下拉框和后端 URL 映射，然后以与当前系统包匹配的版本重新构建、安装。没有当前系统包的精确源码和构建依赖时，不建议通过二进制字符串 patch 或替换共享库来处理，因为这会影响 UKUI 全局搜索和控制中心稳定性。
+
+如果只是希望临时使用不同搜索引擎，可考虑浏览器扩展或浏览器侧搜索重定向，但这不等同于在 UKUI 设置界面新增正式选项。
 
 确认软件商店搜索结果提供者：
 
