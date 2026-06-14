@@ -54,6 +54,27 @@ libsearch/websearch/web-search-plugin.cpp
 
 要真正新增 Bing/Google，不应只改 gsettings，也不应只补图标；需要同时修改设置插件下拉框和后端 URL 映射，然后以与当前系统包匹配的版本重新构建、安装。没有当前系统包的精确源码和构建依赖时，不建议通过二进制字符串 patch 或替换共享库来处理，因为这会影响 UKUI 全局搜索和控制中心稳定性。
 
+判断源码是否与当前系统包精确匹配时，先看本机二进制包版本：
+
+```bash
+dpkg-query -W -f='${binary:Package} ${Version} ${Source}\n' ukui-search libukui-search2 ukui-control-center
+apt-cache policy ukui-search libukui-search2 ukui-control-center
+apt-cache showsrc ukui-search 2>&1 | sed -n '1,80p'
+```
+
+如果本机没有配置 `deb-src`，`apt-cache showsrc` 会提示需要指定代码源，此时只能说明当前 apt 配置不能直接获取源码包，不等于上游社区没有源码。继续查 openKylin/Gitee tag：
+
+```bash
+git ls-remote --tags https://gitee.com/openkylin/ukui-search.git | rg '4\.21\.1\.0|4\.21\.1\.0-ok|build/4\.21'
+git ls-remote --heads https://gitee.com/openkylin/ukui-search.git | rg 'openkylin|packaging|nile|huanghe|yangtze'
+```
+
+常见判断：
+
+- `upstream/<version>` 表示上游基础源码版本。
+- `build/<version>-ok...` 更接近发行版构建点，可能包含打包或下游补丁。
+- 当前系统包如果带有更长的发行版后缀，例如 `<version>-ok0.1k0.22`，而公开 tag 只到 `build/<version>-ok0.1` 或 `build/<version>-ok0.6`，则不能直接断言该 tag 与本机二进制包完全一致。
+
 如果只是希望临时使用不同搜索引擎，可考虑浏览器扩展或浏览器侧搜索重定向，但这不等同于在 UKUI 设置界面新增正式选项。
 
 ### 能否交给默认浏览器的默认搜索引擎
