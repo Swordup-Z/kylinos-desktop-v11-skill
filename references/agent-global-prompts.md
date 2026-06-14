@@ -5,7 +5,7 @@
 ## 设计原则
 
 - 全局提示词只做轻量路由：识别问题域、要求先读取 skill 入口、按需读取引用文档、修复后沉淀经验。
-- 只有当用户问题命中 KylinOS Desktop V11 桌面系统维护场景时才加载 `$HOME/kylinos-desktop-v11-skill/SKILL.md`；普通代码开发、文档编辑、Git 操作或其他无关任务不要加载该 skill，避免无用 token 消耗和上下文膨胀。
+- 只要用户问题属于 KylinOS Desktop V11 桌面系统维护场景，就加载 `$HOME/kylinos-desktop-v11-skill/SKILL.md`；即使问题尚未被当前 skill 的专门 reference 覆盖，也应读取通用系统维护 reference。普通代码开发、文档编辑、Git 操作或其他无关任务不要加载该 skill，避免无用 token 消耗和上下文膨胀。
 - skill 本体仍放在 `$HOME/kylinos-desktop-v11-skill/`，文档内部使用 `$HOME`、`<user>`、`<app-id>` 等占位符，不写死具体用户名。
 - 使用渐进式披露：先读 `SKILL.md`，再按 `SKILL.md` 中的“参考文档”读取具体 `references/*.md`；不要预加载所有 reference。
 - 如果工具原生支持 `SKILL.md` 发现机制，可以同时把该 skill 安装/同步到工具支持的全局 skills 目录；如果不支持，则依靠全局提示词显式要求读取 `$HOME/kylinos-desktop-v11-skill/SKILL.md`。
@@ -40,7 +40,7 @@ $HOME/.agents/skills/<skill-name>/SKILL.md
 
 - 当用户处理 KylinOS Desktop V11、UKUI、KARE、Kaiming、Clash Verge、系统服务、开机自启动、TUN、维护模式、磐石架构、系统保护、分区、挂载、overlay、AI 子系统等桌面操作系统问题时，默认使用 `$HOME/kylinos-desktop-v11-skill/SKILL.md` 作为经验入口。
 - 如果当前任务不是上述桌面系统问题，例如普通代码开发、文档编辑、Git 操作、业务需求分析或通用软件问题，不要读取该 skill，也不要预加载其中的 `references/*.md`。
-- 开始处理上述问题前，先读取 `$HOME/kylinos-desktop-v11-skill/SKILL.md`，再按其中“参考文档”选择性读取对应 `references/*.md`。不要在没有需要时预加载全部 reference。
+- 开始处理上述问题前，先读取 `$HOME/kylinos-desktop-v11-skill/SKILL.md`，再按其中“参考文档”选择性读取对应 `references/*.md`。如果没有命中专门 reference，至少读取 `$HOME/kylinos-desktop-v11-skill/references/system-maintenance.md`。不要在没有需要时预加载全部 reference。
 - 处理问题时遵循“先诊断、再修改、最后验证”：先读取状态、日志、挂载、服务、配置和实际路径，再执行提权或修改命令。
 - 执行系统级修复前必须检查维护模式：运行 `mm-cli -s`。只有确认当前是 maintain mode，才允许修改 `/usr`、`/etc`、`/opt`、系统包、系统服务、设备节点、分区、KSaf 策略等。
 - 如果当前不是维护模式，不要继续系统级修复。应让用户执行 `sudo mm-cli -o`，或在用户授权后执行 `pkexec mm-cli -o`；随后提醒用户重启系统，重启后重新打开当前 AI 工具再继续。
@@ -68,7 +68,7 @@ https://github.com/Swordup-Z/kylinos-desktop-v11-skill
    - Codex: $HOME/.codex/AGENTS.md
    - Claude Code: $HOME/.claude/CLAUDE.md
    - opencode: $HOME/.config/opencode/AGENTS.md
-3. 在全局提示词中加入规则：处理 KylinOS Desktop V11、UKUI、KARE、Kaiming、Clash Verge、系统服务、开机自启动、TUN、维护模式、磐石架构、系统保护、分区、挂载、overlay、AI 子系统等桌面系统问题时，先读取 $HOME/kylinos-desktop-v11-skill/SKILL.md，再按其中“参考文档”选择性读取 references/*.md；如果当前任务不是桌面系统问题，不要加载该 skill。
+3. 在全局提示词中加入规则：处理 KylinOS Desktop V11、UKUI、KARE、Kaiming、Clash Verge、系统服务、开机自启动、TUN、维护模式、磐石架构、系统保护、分区、挂载、overlay、AI 子系统等桌面系统问题时，先读取 $HOME/kylinos-desktop-v11-skill/SKILL.md，再按其中“参考文档”选择性读取 references/*.md；如果没有命中专门 reference，至少读取 references/system-maintenance.md；如果当前任务不是桌面系统问题，不要加载该 skill。
 4. 系统级修复前必须先运行 mm-cli -s 检查维护模式；非维护模式只允许诊断，不要实际修改 /usr、/etc、/opt、系统包、系统服务、设备节点、分区或 KSaf 策略。
 5. 问题确认修复后，如果产生新的可复用经验，应更新到该 skill 的 SKILL.md 或 references/*.md；如果该问题原本未被当前 skill 覆盖，应新增合适的 reference 并在 SKILL.md 中补充入口。
 6. 执行任何 git commit 时，提交作者、提交正文和提交 trailer 不得包含 AI 相关署名或协作生成信息。

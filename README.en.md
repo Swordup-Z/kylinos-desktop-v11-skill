@@ -23,7 +23,7 @@ Requirements:
    - Codex: $HOME/.codex/AGENTS.md
    - Claude Code: $HOME/.claude/CLAUDE.md
    - opencode: $HOME/.config/opencode/AGENTS.md
-3. Add a global rule: when handling KylinOS Desktop V11, UKUI, KARE, Kaiming, Clash Verge, system services, autostart, TUN, maintenance mode, PanShi architecture, system protection, partitions, mounts, overlay, or AI subsystem issues, first read $HOME/kylinos-desktop-v11-skill/SKILL.md, then selectively read the relevant references/*.md files listed there; if the current task is not a desktop-system issue, do not load this skill.
+3. Add a global rule: when handling KylinOS Desktop V11, UKUI, KARE, Kaiming, Clash Verge, system services, autostart, TUN, maintenance mode, PanShi architecture, system protection, partitions, mounts, overlay, or AI subsystem issues, first read $HOME/kylinos-desktop-v11-skill/SKILL.md, then selectively read the relevant references/*.md files listed there; if no specific reference matches, read references/system-maintenance.md at minimum; if the current task is not a desktop-system issue, do not load this skill.
 4. Before any system-level repair, run mm-cli -s to check maintenance mode. If not in maintenance mode, only perform diagnostics and do not modify /usr, /etc, /opt, system packages, services, device nodes, partitions, or KSaf policy.
 5. After a fix is confirmed, record reusable findings in this skill's SKILL.md or references/*.md; if the issue was not previously covered by this skill, add an appropriate reference file and link it from SKILL.md.
 6. When running any git commit, do not include AI-related author, co-author, generator, or assistant attribution in the commit author, commit body, or commit trailers.
@@ -50,7 +50,7 @@ $HOME/kylinos-desktop-v11-skill/SKILL.md
 Add the following instruction to your tool's user-level global prompt file:
 
 ```markdown
-When handling KylinOS Desktop V11, UKUI, KARE, Kaiming, Clash Verge, system services, autostart, TUN, maintenance mode, PanShi architecture, system protection, partitions, mounts, overlay, or AI subsystem issues, first read `$HOME/kylinos-desktop-v11-skill/SKILL.md`, then selectively read the relevant `references/*.md` files listed there. If the current task is not a desktop-system issue, do not load this skill. Do not preload every reference file.
+When handling KylinOS Desktop V11, UKUI, KARE, Kaiming, Clash Verge, system services, autostart, TUN, maintenance mode, PanShi architecture, system protection, partitions, mounts, overlay, or AI subsystem issues, first read `$HOME/kylinos-desktop-v11-skill/SKILL.md`, then selectively read the relevant `references/*.md` files listed there. If no specific reference matches, read `references/system-maintenance.md` at minimum. If the current task is not a desktop-system issue, do not load this skill. Do not preload every reference file.
 
 Before any system-level repair, run `mm-cli -s` to check maintenance mode. Only modify `/usr`, `/etc`, `/opt`, system packages, services, device nodes, partitions, or KSaf policy after confirming maintain mode.
 
@@ -101,8 +101,9 @@ The AI tool should read `SKILL.md`, selectively load the relevant `references/*.
 
 When using this skill for system troubleshooting, the AI tool must follow these baseline rules:
 
-- Read [`SKILL.md`](SKILL.md) first, then selectively read the relevant `references/*.md` files listed there; do not preload every reference file.
-- Load this skill only for KylinOS Desktop V11 desktop-system maintenance tasks; do not load it for ordinary coding, documentation, Git operations, or unrelated tasks.
+- For any KylinOS Desktop V11 desktop-system maintenance task, read [`SKILL.md`](SKILL.md) first, then selectively read the relevant `references/*.md` files listed there; do not preload every reference file.
+- If no specific reference matches, read the general maintenance reference [`references/system-maintenance.md`](references/system-maintenance.md) at minimum.
+- Do not load this skill for ordinary coding, documentation, Git operations, or unrelated tasks.
 - Follow the loop: diagnosis -> repair -> verification -> record reusable findings.
 - Before system-level repairs, run `mm-cli -s` to check maintenance mode; outside maintenance mode, only perform non-destructive diagnostics such as reading state or simulating installs/removals.
 - If the system is not in maintenance mode, enter maintenance mode and ask the user to reboot; after the fix is complete, exit maintenance mode and ask the user to reboot again to return to normal mode.
@@ -113,6 +114,7 @@ When using this skill for system troubleshooting, the AI tool must follow these 
 
 ## Supported Issues
 
+- General system maintenance, maintenance mode, system-level repair boundaries, and the minimal loop for uncovered issues: [`references/system-maintenance.md`](references/system-maintenance.md)
 - Clash Verge Rev TUN mode, `clash-verge-service`, `/dev/net/tun`, and missing or misplaced `verge-mihomo`: [`references/clash-verge-tun.md`](references/clash-verge-tun.md)
 - UKUI autostart failures, missing entries in Settings, `sort-app-list` / `statusMap` issues: [`references/ukui-autostart.md`](references/ukui-autostart.md)
 - Taskbar/tray AI assistant, AI subsystem cleanup, Kaiming AI assistant, and `kylin-ai-memorymap` box residue: [`references/kylin-ai-subsystem.md`](references/kylin-ai-subsystem.md)

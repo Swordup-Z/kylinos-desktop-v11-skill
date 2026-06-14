@@ -23,7 +23,7 @@ https://github.com/Swordup-Z/kylinos-desktop-v11-skill
    - Codex: $HOME/.codex/AGENTS.md
    - Claude Code: $HOME/.claude/CLAUDE.md
    - opencode: $HOME/.config/opencode/AGENTS.md
-3. 在全局提示词中加入规则：处理 KylinOS Desktop V11、UKUI、KARE、Kaiming、Clash Verge、系统服务、开机自启动、TUN、维护模式、磐石架构、系统保护、分区、挂载、overlay、AI 子系统等桌面系统问题时，先读取 $HOME/kylinos-desktop-v11-skill/SKILL.md，再按其中“参考文档”选择性读取 references/*.md；如果当前任务不是桌面系统问题，不要加载该 skill。
+3. 在全局提示词中加入规则：处理 KylinOS Desktop V11、UKUI、KARE、Kaiming、Clash Verge、系统服务、开机自启动、TUN、维护模式、磐石架构、系统保护、分区、挂载、overlay、AI 子系统等桌面系统问题时，先读取 $HOME/kylinos-desktop-v11-skill/SKILL.md，再按其中“参考文档”选择性读取 references/*.md；如果没有命中专门 reference，至少读取 references/system-maintenance.md；如果当前任务不是桌面系统问题，不要加载该 skill。
 4. 系统级修复前必须先运行 mm-cli -s 检查维护模式；非维护模式只允许诊断，不要实际修改 /usr、/etc、/opt、系统包、系统服务、设备节点、分区或 KSaf 策略。
 5. 问题确认修复后，如果产生新的可复用经验，应更新到该 skill 的 SKILL.md 或 references/*.md；如果该问题原本未被当前 skill 覆盖，应新增合适的 reference 并在 SKILL.md 中补充入口。
 6. 执行任何 git commit 时，提交作者、提交正文和提交 trailer 不得包含 AI 相关署名或协作生成信息。
@@ -50,7 +50,7 @@ $HOME/kylinos-desktop-v11-skill/SKILL.md
 把下面这段加入你使用的工具的用户级全局提示词文件：
 
 ```markdown
-处理 KylinOS Desktop V11、UKUI、KARE、Kaiming、Clash Verge、系统服务、开机自启动、TUN、维护模式、磐石架构、系统保护、分区、挂载、overlay、AI 子系统等桌面操作系统问题时，先读取 `$HOME/kylinos-desktop-v11-skill/SKILL.md`，再按其中“参考文档”选择性读取对应 `references/*.md`。如果当前任务不是桌面系统问题，不要加载该 skill；不要一次性预加载全部 reference。
+处理 KylinOS Desktop V11、UKUI、KARE、Kaiming、Clash Verge、系统服务、开机自启动、TUN、维护模式、磐石架构、系统保护、分区、挂载、overlay、AI 子系统等桌面操作系统问题时，先读取 `$HOME/kylinos-desktop-v11-skill/SKILL.md`，再按其中“参考文档”选择性读取对应 `references/*.md`。如果没有命中专门 reference，至少读取 `references/system-maintenance.md`。如果当前任务不是桌面系统问题，不要加载该 skill；不要一次性预加载全部 reference。
 
 系统级修复前必须先运行 `mm-cli -s` 检查维护模式。只有确认当前是 maintain mode，才允许修改 `/usr`、`/etc`、`/opt`、系统包、系统服务、设备节点、分区、KSaf 策略等。
 
@@ -101,8 +101,9 @@ AI 工具应先读取 `SKILL.md`，再按需读取相关 `references/*.md`，然
 
 使用这个 skill 处理系统问题时，AI 工具必须遵守以下基础要求：
 
-- 先读取 [`SKILL.md`](SKILL.md)，再根据其中“参考文档”按需读取具体 `references/*.md`；不要一次性预加载所有 reference。
-- 只有当任务涉及 KylinOS Desktop V11 桌面系统维护场景时才加载该 skill；普通代码开发、文档编辑、Git 操作或其他无关任务不要加载。
+- 只要任务涉及 KylinOS Desktop V11 桌面系统维护场景，就先读取 [`SKILL.md`](SKILL.md)，再根据其中“参考文档”按需读取具体 `references/*.md`；不要一次性预加载所有 reference。
+- 如果没有命中专门 reference，至少读取通用系统维护文档 [`references/system-maintenance.md`](references/system-maintenance.md)。
+- 普通代码开发、文档编辑、Git 操作或其他无关任务不要加载该 skill。
 - 按“诊断 -> 修复 -> 验证 -> 沉淀经验”的闭环处理问题。
 - 执行系统级修复前必须运行 `mm-cli -s` 检查维护模式；非维护模式只允许诊断、读取状态、模拟安装/卸载等非破坏操作。
 - 如果当前不是维护模式，应先进入维护模式并要求用户重启；修复完成后，应退出维护模式并要求用户再次重启回到 normal mode。
@@ -113,6 +114,7 @@ AI 工具应先读取 `SKILL.md`，再按需读取相关 `references/*.md`，然
 
 ## 能处理的问题
 
+- 通用系统维护、维护模式、系统级修复边界、未覆盖问题的最小闭环：[`references/system-maintenance.md`](references/system-maintenance.md)
 - Clash Verge Rev TUN 模式、`clash-verge-service`、`/dev/net/tun`、`verge-mihomo` 路径或核心丢失问题：[`references/clash-verge-tun.md`](references/clash-verge-tun.md)
 - UKUI 开机自启动不生效、设置界面不显示新增启动项、`sort-app-list` / `statusMap` 异常：[`references/ukui-autostart.md`](references/ukui-autostart.md)
 - 任务栏/托盘 AI 助手、AI 子系统、Kaiming AI 助手、`kylin-ai-memorymap` 文件保护箱残留清理：[`references/kylin-ai-subsystem.md`](references/kylin-ai-subsystem.md)
