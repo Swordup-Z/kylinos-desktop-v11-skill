@@ -27,7 +27,8 @@ Requirements:
 4. Before any system-level repair, run mm-cli -s to check maintenance mode. If not in maintenance mode, only perform diagnostics and do not modify /usr, /etc, /opt, system packages, services, device nodes, partitions, or KSaf policy.
 5. After a fix is confirmed, record reusable findings in this skill's SKILL.md or references/*.md; if the issue was not previously covered by this skill, add an appropriate reference file and link it from SKILL.md.
 6. When running any git commit, do not include AI-related author, co-author, generator, or assistant attribution in the commit author, commit body, or commit trailers.
-7. After installation, verify by reading $HOME/kylinos-desktop-v11-skill/SKILL.md and tell me which skill entry point you will use first for future KylinOS Desktop V11 system issues.
+7. For future system repairs, use a dedicated session name such as os-fix; if the current AI tool supports session resume commands, continue later with <tool> resume os-fix to restore the same troubleshooting context.
+8. After installation, verify by reading $HOME/kylinos-desktop-v11-skill/SKILL.md and tell me which skill entry point you will use first for future KylinOS Desktop V11 system issues.
 ```
 
 ### Option 2: Manual Installation
@@ -88,6 +89,22 @@ $HOME/kylinos-desktop-v11-skill/SKILL.md
 ```
 
 #### 4. Use It
+
+For system troubleshooting, it is recommended to use a dedicated session such as `os-fix`. This keeps system state, previous diagnostics, maintenance-mode transitions, completed repairs, and recorded findings in one recoverable context.
+
+If your AI tool supports named sessions or session resume commands, continue the same troubleshooting session with a command like:
+
+```bash
+<tool> resume os-fix
+```
+
+Examples:
+
+```bash
+codex resume os-fix
+claude resume os-fix
+opencode resume os-fix
+```
 
 After setup, describe the system issue directly, for example:
 

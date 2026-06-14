@@ -27,7 +27,8 @@ https://github.com/Swordup-Z/kylinos-desktop-v11-skill
 4. 系统级修复前必须先运行 mm-cli -s 检查维护模式；非维护模式只允许诊断，不要实际修改 /usr、/etc、/opt、系统包、系统服务、设备节点、分区或 KSaf 策略。
 5. 问题确认修复后，如果产生新的可复用经验，应更新到该 skill 的 SKILL.md 或 references/*.md；如果该问题原本未被当前 skill 覆盖，应新增合适的 reference 并在 SKILL.md 中补充入口。
 6. 执行任何 git commit 时，提交作者、提交正文和提交 trailer 不得包含 AI 相关署名或协作生成信息。
-7. 安装完成后验证：读取 $HOME/kylinos-desktop-v11-skill/SKILL.md，并告诉我后续处理 KylinOS Desktop V11 系统问题时会先使用哪个 skill 入口。
+7. 建议后续处理系统问题时专门使用一个固定会话名，例如 os-fix；如果当前 AI 工具支持恢复命令，后续可用 <tool> resume os-fix 恢复同一个系统修复上下文。
+8. 安装完成后验证：读取 $HOME/kylinos-desktop-v11-skill/SKILL.md，并告诉我后续处理 KylinOS Desktop V11 系统问题时会先使用哪个 skill 入口。
 ```
 
 ### 方式二：手动安装
@@ -88,6 +89,22 @@ $HOME/kylinos-desktop-v11-skill/SKILL.md
 ```
 
 #### 4. 实际使用
+
+建议给系统问题处理专门准备一个固定会话，例如 `os-fix`。这样系统状态、已做过的诊断、维护模式切换、已修复问题和经验沉淀记录都能保留在同一个上下文里。
+
+如果你使用的 AI 工具支持命名会话或恢复会话，后续可以用类似下面的命令继续同一个系统修复会话：
+
+```bash
+<tool> resume os-fix
+```
+
+例如：
+
+```bash
+codex resume os-fix
+claude resume os-fix
+opencode resume os-fix
+```
 
 以后直接描述系统问题即可，例如：
 
