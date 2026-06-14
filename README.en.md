@@ -115,6 +115,7 @@ When using this skill for system troubleshooting, the AI tool must follow these 
 ## Supported Issues
 
 - General system maintenance, maintenance mode, system-level repair boundaries, and the minimal loop for uncovered issues: [`references/system-maintenance.md`](references/system-maintenance.md)
+- UKUI right-side system tray icons, StatusNotifier icon order or folded/hidden area not persisting after app or system restart, `systemTray.json`, `orderedItems`, and `separateIndex`: [`references/ukui-system-tray.md`](references/ukui-system-tray.md)
 - Clash Verge Rev TUN mode, `clash-verge-service`, `/dev/net/tun`, and missing or misplaced `verge-mihomo`: [`references/clash-verge-tun.md`](references/clash-verge-tun.md)
 - UKUI autostart failures, missing entries in Settings, `sort-app-list` / `statusMap` issues: [`references/ukui-autostart.md`](references/ukui-autostart.md)
 - Taskbar/tray AI assistant, AI subsystem cleanup, Kaiming AI assistant, and `kylin-ai-memorymap` box residue: [`references/kylin-ai-subsystem.md`](references/kylin-ai-subsystem.md)

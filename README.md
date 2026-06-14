@@ -115,6 +115,7 @@ AI 工具应先读取 `SKILL.md`，再按需读取相关 `references/*.md`，然
 ## 能处理的问题
 
 - 通用系统维护、维护模式、系统级修复边界、未覆盖问题的最小闭环：[`references/system-maintenance.md`](references/system-maintenance.md)
+- UKUI 右侧托盘小图标、StatusNotifier 图标顺序/隐藏区重启后不保留、`systemTray.json`、`orderedItems`、`separateIndex`：[`references/ukui-system-tray.md`](references/ukui-system-tray.md)
 - Clash Verge Rev TUN 模式、`clash-verge-service`、`/dev/net/tun`、`verge-mihomo` 路径或核心丢失问题：[`references/clash-verge-tun.md`](references/clash-verge-tun.md)
 - UKUI 开机自启动不生效、设置界面不显示新增启动项、`sort-app-list` / `statusMap` 异常：[`references/ukui-autostart.md`](references/ukui-autostart.md)
 - 任务栏/托盘 AI 助手、AI 子系统、Kaiming AI 助手、`kylin-ai-memorymap` 文件保护箱残留清理：[`references/kylin-ai-subsystem.md`](references/kylin-ai-subsystem.md)
