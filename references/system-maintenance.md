@@ -73,6 +73,8 @@ pkexec mm-cli -c -a
 
 退出维护模式后通常还需要重启系统。重启后再确认系统已回到 normal mode。
 
+`mm-cli -c -a` 的效果是“保存维护模式改动，并安排后续回到 normal mode”。在已启动的维护模式会话里，即使命令成功，`mm-cli -s` 仍可能继续显示 maintain；日志中可能同时出现 `Maintain mode has been deactivated with all packages saved` 和 `current system status: maintain`，这通常表示当前会话仍保持维护模式，下一次重启后才会进入 normal mode。验证时以重启后的 `mm-cli -s` 为准。
+
 在部分环境中，`mm-cli -c -a` 前台可能返回“退出维护模式失败”，但后台日志已经写入下一次启动进入 normal mode。遇到这种不一致时，不要反复执行破坏性操作，先查日志确认真实状态：
 
 ```bash
