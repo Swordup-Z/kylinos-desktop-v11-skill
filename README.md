@@ -2,7 +2,7 @@
 
 [English](README.en.md)
 
-用于沉淀和复用 KylinOS Desktop V11 桌面系统问题的诊断、修复与验证经验，覆盖应用安装与包管理、UKUI、KARE/Kaiming、Clash Verge TUN、开机自启动、维护模式、磐石架构、系统服务、图形/频率、托盘、AI 子系统、分区挂载、overlay、系统噪声清理和 AI 工具全局提示词等场景。
+用于沉淀和复用 KylinOS Desktop V11 桌面系统问题的诊断、修复与验证经验，覆盖应用安装与包管理、UKUI、KARE/Kaiming、Clash Verge TUN、开机自启动、维护模式、磐石架构、系统服务、图形/频率、托盘、全局搜索、AI 子系统、分区挂载、overlay、系统噪声清理和 AI 工具全局提示词等场景。
 
 ## 安装方式
 
@@ -168,6 +168,7 @@ AI 工具应先读取 `SKILL.md`，再按需读取相关 `references/*.md`，然
 
 - UKUI 开机自启动不生效、设置界面不显示新增启动项、原始 `.desktop` 修复、图标解析、`sort-app-list` / `statusMap` 异常：[`references/ukui-autostart.md`](references/ukui-autostart.md)
 - UKUI 全局快捷键冲突、设置界面提示快捷键被系统占用、全局搜索快捷键、`Alt+Space` 与窗口菜单冲突：[`references/ukui-keybindings.md`](references/ukui-keybindings.md)
+- UKUI 全局搜索结果来源、应用商店未安装应用结果、软件商店搜索 D-Bus 插件屏蔽与回滚：[`references/ukui-search.md`](references/ukui-search.md)
 - UKUI 右侧托盘小图标顺序和隐藏区不持久、`systemTray.json`、`orderedItems`、`separateIndex`：[`references/ukui-system-tray.md`](references/ukui-system-tray.md)
 - `ukui-system-service-manager.service` 反复 timeout、`QDBusError("", "")`、`org.ukui.serviceManager` 被孤儿进程占用、D-Bus activation 持久化修复：[`references/ukui-system-service-manager.md`](references/ukui-system-service-manager.md)
 - 任务栏/托盘 AI 助手、AI 子系统、Kaiming AI 助手卸载边界和残留清理：[`references/kylin-ai-subsystem.md`](references/kylin-ai-subsystem.md)

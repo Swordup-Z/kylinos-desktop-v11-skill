@@ -2,7 +2,7 @@
 
 [中文](README.md)
 
-A reusable skill and knowledge base for diagnosing, fixing, verifying, and recording KylinOS Desktop V11 system issues. It covers application installation and package management, UKUI, KARE/Kaiming, Clash Verge TUN, autostart, maintenance mode, system services, graphics/frequency issues, tray behavior, AI subsystem cleanup, partitions, mounts, overlay views, system-noise cleanup, global prompts for AI tools, and the PanShi system architecture.
+A reusable skill and knowledge base for diagnosing, fixing, verifying, and recording KylinOS Desktop V11 system issues. It covers application installation and package management, UKUI, KARE/Kaiming, Clash Verge TUN, autostart, maintenance mode, system services, graphics/frequency issues, tray behavior, global search, AI subsystem cleanup, partitions, mounts, overlay views, system-noise cleanup, global prompts for AI tools, and the PanShi system architecture.
 
 ## Installation
 
@@ -168,6 +168,7 @@ The skill currently covers the issue types below. Each item links to its referen
 
 - UKUI autostart failures, missing Settings entries, original `.desktop` repair, icon resolution, and `sort-app-list` / `statusMap` issues: [`references/ukui-autostart.md`](references/ukui-autostart.md)
 - UKUI global shortcut conflicts, Settings reporting that a shortcut is occupied by the system, global search shortcuts, and `Alt+Space` conflicts with the window menu: [`references/ukui-keybindings.md`](references/ukui-keybindings.md)
+- UKUI global-search result sources, Software Center results for uninstalled apps, and disabling or rolling back the Software Center search D-Bus provider: [`references/ukui-search.md`](references/ukui-search.md)
 - UKUI right-side system tray icon order and folded/hidden area persistence, `systemTray.json`, `orderedItems`, and `separateIndex`: [`references/ukui-system-tray.md`](references/ukui-system-tray.md)
 - `ukui-system-service-manager.service` repeated timeouts, `QDBusError("", "")`, `org.ukui.serviceManager` owned by an orphan process, and persistent D-Bus activation repair: [`references/ukui-system-service-manager.md`](references/ukui-system-service-manager.md)
 - Taskbar/tray AI assistant, AI subsystem cleanup, Kaiming AI assistant removal boundaries, and residue cleanup: [`references/kylin-ai-subsystem.md`](references/kylin-ai-subsystem.md)
