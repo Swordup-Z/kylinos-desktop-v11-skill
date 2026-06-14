@@ -134,6 +134,7 @@ When using this skill for system troubleshooting, the AI tool must follow these 
 
 - General system maintenance, maintenance mode, system-level repair boundaries, and the minimal loop for uncovered issues: [`references/system-maintenance.md`](references/system-maintenance.md)
 - UKUI right-side system tray icons, StatusNotifier icon order or folded/hidden area not persisting after app or system restart, `systemTray.json`, `orderedItems`, and `separateIndex`: [`references/ukui-system-tray.md`](references/ukui-system-tray.md)
+- Graphics drivers, GPU/display frequency, `devfreq` DVFS failures, `failed to set <driver> frequency`, and hardware-specific graphics stability issues such as NVIDIA probing on systems without NVIDIA hardware: [`references/graphics-frequency.md`](references/graphics-frequency.md)
 - `ukui-system-service-manager.service` repeated timeouts, `QDBusError("", "")`, `org.ukui.serviceManager` owned by an orphan process, and UKUI system service manager failures: [`references/ukui-system-service-manager.md`](references/ukui-system-service-manager.md)
 - Clash Verge Rev TUN mode, `clash-verge-service`, `/dev/net/tun`, and missing or misplaced `verge-mihomo`: [`references/clash-verge-tun.md`](references/clash-verge-tun.md)
 - UKUI autostart failures, missing entries in Settings, `sort-app-list` / `statusMap` issues: [`references/ukui-autostart.md`](references/ukui-autostart.md)
