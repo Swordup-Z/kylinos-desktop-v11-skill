@@ -122,6 +122,7 @@ When using this skill for system troubleshooting, the AI tool must follow these 
 - If no specific reference matches, read the general maintenance reference [`references/system-maintenance.md`](references/system-maintenance.md) at minimum.
 - Do not load this skill for ordinary coding, documentation, Git operations, or unrelated tasks.
 - Follow the loop: diagnosis -> repair -> verification -> record reusable findings.
+- Treat persistent repair as the default goal for system issues; after any runtime workaround, verify whether the fix survives reboot, relogin, service restart, or app restart.
 - Before system-level repairs, run `mm-cli -s` to check maintenance mode; outside maintenance mode, only perform non-destructive diagnostics such as reading state or simulating installs/removals.
 - If the system is not in maintenance mode, enter maintenance mode and ask the user to reboot; after the fix is complete, exit maintenance mode and ask the user to reboot again to return to normal mode.
 - Do not delete, move, or overwrite existing executables, configs, subscription files, proxy cores, systemd units, or user data unless the user explicitly asks and the impact has been verified.
@@ -133,6 +134,7 @@ When using this skill for system troubleshooting, the AI tool must follow these 
 
 - General system maintenance, maintenance mode, system-level repair boundaries, and the minimal loop for uncovered issues: [`references/system-maintenance.md`](references/system-maintenance.md)
 - UKUI right-side system tray icons, StatusNotifier icon order or folded/hidden area not persisting after app or system restart, `systemTray.json`, `orderedItems`, and `separateIndex`: [`references/ukui-system-tray.md`](references/ukui-system-tray.md)
+- `ukui-system-service-manager.service` repeated timeouts, `QDBusError("", "")`, `org.ukui.serviceManager` owned by an orphan process, and UKUI system service manager failures: [`references/ukui-system-service-manager.md`](references/ukui-system-service-manager.md)
 - Clash Verge Rev TUN mode, `clash-verge-service`, `/dev/net/tun`, and missing or misplaced `verge-mihomo`: [`references/clash-verge-tun.md`](references/clash-verge-tun.md)
 - UKUI autostart failures, missing entries in Settings, `sort-app-list` / `statusMap` issues: [`references/ukui-autostart.md`](references/ukui-autostart.md)
 - Taskbar/tray AI assistant, AI subsystem cleanup, Kaiming AI assistant, and `kylin-ai-memorymap` box residue: [`references/kylin-ai-subsystem.md`](references/kylin-ai-subsystem.md)

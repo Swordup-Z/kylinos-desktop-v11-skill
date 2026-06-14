@@ -122,6 +122,7 @@ AI 工具应先读取 `SKILL.md`，再按需读取相关 `references/*.md`，然
 - 如果没有命中专门 reference，至少读取通用系统维护文档 [`references/system-maintenance.md`](references/system-maintenance.md)。
 - 普通代码开发、文档编辑、Git 操作或其他无关任务不要加载该 skill。
 - 按“诊断 -> 修复 -> 验证 -> 沉淀经验”的闭环处理问题。
+- 系统问题默认以持久化修复为目标；临时止血后，还要确认重启、重新登录、服务重拉起或应用重启后是否仍然有效。
 - 执行系统级修复前必须运行 `mm-cli -s` 检查维护模式；非维护模式只允许诊断、读取状态、模拟安装/卸载等非破坏操作。
 - 如果当前不是维护模式，应先进入维护模式并要求用户重启；修复完成后，应退出维护模式并要求用户再次重启回到 normal mode。
 - 不要删除、移动或覆盖用户已有的可执行文件、配置文件、订阅文件、代理核心、systemd 单元或用户数据，除非用户明确要求且已验证影响。
@@ -133,6 +134,7 @@ AI 工具应先读取 `SKILL.md`，再按需读取相关 `references/*.md`，然
 
 - 通用系统维护、维护模式、系统级修复边界、未覆盖问题的最小闭环：[`references/system-maintenance.md`](references/system-maintenance.md)
 - UKUI 右侧托盘小图标、StatusNotifier 图标顺序/隐藏区重启后不保留、`systemTray.json`、`orderedItems`、`separateIndex`：[`references/ukui-system-tray.md`](references/ukui-system-tray.md)
+- `ukui-system-service-manager.service` 反复 timeout、`QDBusError("", "")`、`org.ukui.serviceManager` 被孤儿进程占用、UKUI 系统服务管理器异常：[`references/ukui-system-service-manager.md`](references/ukui-system-service-manager.md)
 - Clash Verge Rev TUN 模式、`clash-verge-service`、`/dev/net/tun`、`verge-mihomo` 路径或核心丢失问题：[`references/clash-verge-tun.md`](references/clash-verge-tun.md)
 - UKUI 开机自启动不生效、设置界面不显示新增启动项、`sort-app-list` / `statusMap` 异常：[`references/ukui-autostart.md`](references/ukui-autostart.md)
 - 任务栏/托盘 AI 助手、AI 子系统、Kaiming AI 助手、`kylin-ai-memorymap` 文件保护箱残留清理：[`references/kylin-ai-subsystem.md`](references/kylin-ai-subsystem.md)
