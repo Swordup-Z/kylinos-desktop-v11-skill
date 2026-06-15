@@ -209,6 +209,57 @@ patches/<source-package-b>/
 - `rolled-back`：已经回滚到安装前状态。
 - `kept-for-future`：没有安装或已不再使用，但源码、patch 或经验保留给后续参考。
 
+## 中间产物忽略策略
+
+本地源码客制化工作区应尽量让 `git status` 只显示真实源码修改。构建、配置、测试或打包过程中发现未跟踪的中间产物时，不要每次手工处理；应优先把稳定模式写入合适的 `.gitignore`，并把该规则保留在本地源码工作树中，减少后续重复清理。
+
+忽略规则优先级：
+
+- 源码仓库内部生成且不应提交的产物，写入 `<source-tree>/.gitignore`。
+- 项目根目录下的本地构建、staging、临时包、符号对比、日志等产物，写入 `/data/usershare/kylinos-local-sources/<component-or-fix>/.gitignore`。
+- 多个客制化项目都会出现的通用临时产物，可考虑写入 `/data/usershare/kylinos-local-sources/.gitignore`，但不要影响各项目必须保留的 `CUSTOMIZATION.md`、`patches/` 和长期 `rollback/`。
+
+常见可忽略模式包括：
+
+```gitignore
+build/
+cmake-build-*/
+.cache/
+.lupdate/
+.qm/
+*.o
+*.so
+*.a
+*.log
+*.tmp
+```
+
+`.gitignore` 只对未跟踪文件生效。若构建工具改写的是已经被 git 跟踪的源码文件，例如翻译源 `.ts`、schema、资源清单或版本文件，不能只靠 `.gitignore` 解决；应优先调整构建目标或构建参数避免改写源码树。暂时无法避免时，构建后用 `git checkout -- <tracked-generated-files>` 或等价非破坏方式恢复无关生成噪声，只保留真实功能修改。
+
+如果预计构建过程会改写已跟踪文件，编译前可以先把确认属于本次功能修改的文件加入暂存区，用暂存区隔离真实改动和构建副作用：
+
+```bash
+git status -sb
+git diff -- <real-source-files>
+git add <real-source-files>
+git diff --cached --stat
+```
+
+构建完成后再检查：
+
+```bash
+git diff --stat
+git diff --cached --stat
+```
+
+此时未暂存区通常就是构建过程产生的噪声，可逐项确认后恢复；暂存区仍保留本次真实源码修改。恢复噪声时不要使用会丢失暂存区的破坏性命令，优先按文件恢复未暂存改动：
+
+```bash
+git checkout -- <tracked-generated-files>
+```
+
+验证期间可以保留暂存状态，但不要在用户确认真实运行效果前执行 `git commit` 或导出 patch。若后续还要继续修改同一文件，先确认暂存区和工作区差异，避免把未验证的新改动混入已暂存的构建候选。
+
 ## 保留与清理
 
 - 用户明确要求后续继续修改时，保留源码树和必要构建目录；只清理重复构建缓存、下载缓存和不再需要的临时包。

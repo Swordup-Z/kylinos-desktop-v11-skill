@@ -203,7 +203,8 @@ strings <candidate-output> | rg '<expected-feature>|<known-system-string>'
 - 头文件或库缺失：优先安装最小 `-dev` 包，不要一次性安装完整桌面元包。
 - 构建目录缓存污染：删除构建目录后用相同源码重新配置，不要修改源码绕过依赖检查。
 - `RPATH`/`RUNPATH` 指向构建目录：重新配置 `CMAKE_SKIP_RPATH=ON`，不要安装带用户目录路径的产物。
-- 翻译工具 `lupdate` 改写 `.ts`：构建后恢复无关翻译源噪声，只保留功能相关源码和资源变更。
+- 未跟踪中间产物反复污染 `git status`：按 [local-customization-index.md](local-customization-index.md) 的中间产物忽略策略补充 `.gitignore`，不要每次手工清理。
+- 翻译工具 `lupdate` 改写 `.ts`：如果 `.ts` 已被 git 跟踪，`.gitignore` 无法屏蔽；优先调整构建目标或参数避免改写源码树，暂时无法避免时构建后恢复无关翻译源噪声，只保留功能相关源码和资源变更。
 - 链接成功但运行失败：保留日志和符号差异，回到候选节点收敛，不要直接扩大替换范围。
 
 每次重试都应只改变一个变量：源码节点、构建参数、依赖集合或补丁内容。重试成功后再进入 ABI/依赖/RPATH 和回滚验证。
