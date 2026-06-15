@@ -72,7 +72,7 @@ git -C "/data/usershare/kylinos-local-sources/<component-or-fix>/<source-tree>" 
 - 安装前 ABI、SONAME、NEEDED、RPATH/RUNPATH、导出符号、关键字符串验证结果。
 - 试装时间、staged 文件、系统备份、用户级覆盖备份和回滚脚本路径。
 - 安装后验证结果、仍需用户重启或手工验证的项目。
-- 当前状态：`draft`、`tested`、`installed`、`rolled-back`、`kept-for-future`。
+- 当前阶段状态和状态证据。构建通过但未安装不能写成已修复；只能标记为 `build-verified` 或 `staged-for-install`。已安装但尚未完成真实功能验证时标记为 `installed-pending-runtime-verification`。只有真实系统加载新产物且用户场景验证通过后，才标记为 `runtime-verified`。其他状态可用 `draft`、`rolled-back`、`kept-for-future`。
 
 示例结构：
 
@@ -148,7 +148,7 @@ git format-patch -1 HEAD --stdout > "/data/usershare/kylinos-local-sources/<comp
 
 | Project | Scenario | Source packages | Source tree | Patch dirs | Status | Index |
 | --- | --- | --- | --- | --- | --- | --- |
-| <component-or-fix> | <short-scenario> | <source-package> | <source-tree>/ | patches/<source-package>/ | installed | CUSTOMIZATION.md |
+| <component-or-fix> | <short-scenario> | <source-package> | <source-tree>/ | patches/<source-package>/ | build-verified / staged-for-install / installed-pending-runtime-verification / runtime-verified | CUSTOMIZATION.md |
 ```
 
 每次新增、试装、回滚、导出 patch、迁移本地源码客制化项目或确认系统包升级后的新基线时，都要同步更新全局索引和对应 `CUSTOMIZATION.md`。
@@ -164,9 +164,9 @@ git format-patch -1 HEAD --stdout > "/data/usershare/kylinos-local-sources/<comp
 `CUSTOMIZATION.md` 中建议增加“源码包与 patch 映射”表：
 
 ```text
-| Source package | Binary packages | Base version/tag | Source tree | Patch dir | Latest local commit | Latest patch | Installed files | Rollback |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| <source-package> | <binary-package-list> | <version-or-tag> | <source-tree>/ | patches/<source-package>/ | <commit-or-none> | <patch-or-none> | /usr/lib/... | rollback/<timestamp>/restore.sh |
+| Source package | Binary packages | Base version/tag | Source tree | Patch dir | Latest local commit | Latest patch | Stage | Evidence | Installed files | Rollback |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| <source-package> | <binary-package-list> | <version-or-tag> | <source-tree>/ | patches/<source-package>/ | <commit-or-none> | <patch-or-none> | build-verified | build + ABI checks passed, not installed | /usr/lib/... | rollback/<timestamp>/restore.sh |
 ```
 
 如果一个客制化项目涉及多个源码包，应在同一个项目根目录下按源码包拆分 patch 目录：
@@ -177,6 +177,16 @@ patches/<source-package-b>/
 ```
 
 查找时先读全局索引，确认项目和源码包；再读对应项目的 `CUSTOMIZATION.md`，确认 patch、基线版本、安装目标和回滚包；最后才打开具体 patch 或源码文件。
+
+全局索引和项目索引中的状态必须按阶段更新，不能提前确认。推荐阶段含义：
+
+- `draft`：还在分析或修改源码，没有完成构建。
+- `build-verified`：构建成功，且 ABI/RPATH/依赖/符号等安装前检查通过，但尚未准备安装包。
+- `staged-for-install`：已准备 staged 文件、安装脚本、回滚脚本和校验文件，但尚未写入系统路径。
+- `installed-pending-runtime-verification`：已在维护模式中安装到系统路径，但还没有完成真实桌面会话、服务日志、重启/重登录等验证。
+- `runtime-verified`：真实运行环境验证通过，可以描述为已修复。
+- `rolled-back`：已经回滚到安装前状态。
+- `kept-for-future`：没有安装或已不再使用，但源码、patch 或经验保留给后续参考。
 
 ## 保留与清理
 
