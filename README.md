@@ -242,6 +242,7 @@ README 同时介绍 `references/` 和 `knowledge/`：前者是入口和索引，
 - 代理客户端 TUN 模式安装失败、`/dev/net/tun` 缺失、TUN 设备持久化：[`references/proxy-tun.md`](references/proxy-tun.md)
 - 代理服务安装、启动、状态验证和权限问题，例如 Clash Verge Rev 的 `clash-verge-service`：[`references/proxy-tun.md`](references/proxy-tun.md)
 - 代理核心路径不一致、核心丢失、隔离环境 shadow/upper 路径恢复，以及代理组消失后的排查：[`references/proxy-tun.md`](references/proxy-tun.md)
+- Clash TUN 创建 `Meta` 等虚拟网卡后触发麒麟网络发现/防火墙弹窗时，判断 TUN 是否被 NetworkManager 当成新网络连接，并通过忽略本机 TUN 接口持久化修复：[`references/proxy-tun.md`](references/proxy-tun.md)
 
 ### UKUI 桌面与系统服务
 

@@ -242,6 +242,7 @@ The skill currently covers the issue types below. `references/` is the category 
 - Proxy-client TUN installation failures, missing `/dev/net/tun`, and persistent TUN device handling: [`references/proxy-tun.md`](references/proxy-tun.md)
 - Proxy service installation, startup, status validation, and permission issues, such as Clash Verge Rev `clash-verge-service`: [`references/proxy-tun.md`](references/proxy-tun.md)
 - Missing or misplaced proxy cores, isolated-environment shadow/upper path recovery, and proxy group disappearance after core-path problems: [`references/proxy-tun.md`](references/proxy-tun.md)
+- Kylin network-discovery or firewall prompts triggered after Clash TUN creates virtual interfaces such as `Meta`, including diagnosing whether NetworkManager treats the TUN interface as a new connection and persistently ignoring the local TUN interface: [`references/proxy-tun.md`](references/proxy-tun.md)
 
 ### UKUI Desktop And System Services
 
