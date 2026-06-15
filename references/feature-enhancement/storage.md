@@ -1,0 +1,17 @@
+# 系统功能增强：存储与工作区
+
+## 适用场景
+
+- 希望把本地源码、构建和 patch 工作区放到 DATA 分区。
+- 需要制定分区、挂载或开发工作区的长期使用策略。
+
+## 先读知识章节
+
+- [`../../knowledge/feature-enhancement/storage/README.md`](../../knowledge/feature-enhancement/storage/README.md)
+
+## 最小诊断
+
+```bash
+findmnt -T /data/usershare
+df -hT /data/usershare "$HOME"
+```
