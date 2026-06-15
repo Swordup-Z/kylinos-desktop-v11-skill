@@ -1,6 +1,6 @@
 # 源码重编译知识库
 
-本目录记录 KylinOS Desktop V11 上“需要重新编译系统源码包或替换系统二进制才能解决”的问题。这里不记录普通应用安装经验，也不记录一次性现场日志；普通安装问题应放到 `references/application-installation.md`，系统级通用边界放到 `references/system-maintenance.md`。
+本目录记录 KylinOS Desktop V11 上“需要重新编译系统源码包或替换系统二进制才能解决”的问题。这里不记录普通应用安装经验，也不记录一次性现场日志；普通安装问题从 `references/application-installation.md` 路由，系统级通用边界从 `references/system-maintenance.md` 路由。
 
 ## 适用场景
 

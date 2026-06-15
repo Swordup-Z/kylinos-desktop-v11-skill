@@ -127,9 +127,14 @@ kylinos-desktop-v11-skill/
 │   └── ...
 ├── knowledge/                # Concrete troubleshooting chapters
 │   ├── README.md             # How knowledge/ differs from references/
-│   └── source-rebuild/
-│       ├── README.md         # General source-rebuild workflow
-│       └── ukui-search-web-engine.md
+│   ├── system/               # System maintenance, safety boundaries, system noise
+│   ├── applications/         # Application installation and KARE boundaries
+│   ├── ukui/                 # UKUI autostart, search, tray, services
+│   ├── network/              # Clash Verge / TUN
+│   ├── hardware/             # Fingerprint, graphics, frequency
+│   ├── storage/              # Partitions, mounts, overlay views
+│   ├── agent-tools/          # Codex/Claude/opencode global prompts
+│   └── source-rebuild/       # General source-rebuild workflows and cases
 ├── README.md                 # Chinese README
 └── README.en.md              # English README
 ```
@@ -148,11 +153,36 @@ For example, when handling “UKUI global search has hard-coded default web engi
 ```text
 SKILL.md
   -> references/ukui-search.md
+  -> references/source-rebuild.md
   -> knowledge/source-rebuild/README.md
   -> knowledge/source-rebuild/ukui-search-web-engine.md
 ```
 
 New findings should follow the same structure: keep `references/` as the category entry, minimal diagnosis, and routing layer; put detailed background, source matching, repair steps, verification, rollback, and cleanup rules under the relevant `knowledge/` chapter.
+
+### References And Knowledge Routing
+
+This README documents both `references/` and `knowledge/`: references are entry points and indexes, while knowledge files contain the concrete reasoning and procedures. Common routes:
+
+| Scenario | Reference entry | Knowledge chapter |
+| --- | --- | --- |
+| General system maintenance, maintenance mode, PanShi boundaries | [`references/system-maintenance.md`](references/system-maintenance.md) | [`knowledge/system/system-maintenance.md`](knowledge/system/system-maintenance.md) |
+| System health noise cleanup | [`references/system-health-noise.md`](references/system-health-noise.md) | [`knowledge/system/system-health-noise.md`](knowledge/system/system-health-noise.md) |
+| Application installation, AppImage, third-party apt sources | [`references/application-installation.md`](references/application-installation.md) | [`knowledge/applications/application-installation.md`](knowledge/applications/application-installation.md) |
+| KARE and host boundaries | [`references/kare-namespace.md`](references/kare-namespace.md) | [`knowledge/applications/kare-namespace.md`](knowledge/applications/kare-namespace.md) |
+| Clash Verge / TUN | [`references/clash-verge-tun.md`](references/clash-verge-tun.md) | [`knowledge/network/clash-verge-tun.md`](knowledge/network/clash-verge-tun.md) |
+| UKUI autostart | [`references/ukui-autostart.md`](references/ukui-autostart.md) | [`knowledge/ukui/autostart.md`](knowledge/ukui/autostart.md) |
+| UKUI global shortcuts | [`references/ukui-keybindings.md`](references/ukui-keybindings.md) | [`knowledge/ukui/keybindings.md`](knowledge/ukui/keybindings.md) |
+| UKUI global search | [`references/ukui-search.md`](references/ukui-search.md) | [`knowledge/ukui/search.md`](knowledge/ukui/search.md) |
+| Source-rebuild repairs | [`references/source-rebuild.md`](references/source-rebuild.md) | [`knowledge/source-rebuild/README.md`](knowledge/source-rebuild/README.md), [`knowledge/source-rebuild/ukui-search-web-engine.md`](knowledge/source-rebuild/ukui-search-web-engine.md) |
+| UKUI right-side tray | [`references/ukui-system-tray.md`](references/ukui-system-tray.md) | [`knowledge/ukui/system-tray.md`](knowledge/ukui/system-tray.md) |
+| UKUI system service manager | [`references/ukui-system-service-manager.md`](references/ukui-system-service-manager.md) | [`knowledge/ukui/system-service-manager.md`](knowledge/ukui/system-service-manager.md) |
+| AI subsystem cleanup | [`references/kylin-ai-subsystem.md`](references/kylin-ai-subsystem.md) | [`knowledge/ukui/kylin-ai-subsystem.md`](knowledge/ukui/kylin-ai-subsystem.md) |
+| Fingerprint and biometrics | [`references/biometric-fingerprint.md`](references/biometric-fingerprint.md) | [`knowledge/hardware/biometric-fingerprint.md`](knowledge/hardware/biometric-fingerprint.md) |
+| Graphics, frequency, hardware stability | [`references/graphics-frequency.md`](references/graphics-frequency.md) | [`knowledge/hardware/graphics-frequency.md`](knowledge/hardware/graphics-frequency.md) |
+| Partitions, mounts, overlay views | [`references/storage-layout.md`](references/storage-layout.md) | [`knowledge/storage/layout.md`](knowledge/storage/layout.md) |
+| Codex config | [`references/codex-config.md`](references/codex-config.md) | [`knowledge/agent-tools/codex-config.md`](knowledge/agent-tools/codex-config.md) |
+| Multi-tool global prompts | [`references/agent-global-prompts.md`](references/agent-global-prompts.md) | [`knowledge/agent-tools/global-prompts.md`](knowledge/agent-tools/global-prompts.md) |
 
 ## Core Requirements
 
@@ -161,7 +191,7 @@ When using this skill for system troubleshooting, the AI tool must follow these 
 - For any KylinOS Desktop V11 desktop-system maintenance task, read [`SKILL.md`](SKILL.md) first, then selectively read the relevant `references/*.md` files listed there; do not preload every reference file.
 - `references/` is the category and routing layer; `knowledge/` contains concrete troubleshooting chapters. Continue into `knowledge/` only when the selected reference points there.
 - If no specific reference matches, read the general maintenance reference [`references/system-maintenance.md`](references/system-maintenance.md) at minimum.
-- If an issue requires rebuilding a system source package, replacing a system shared library, or assessing ABI/SONAME/dependency/RPATH risk, read the specific scenario reference first, then [`knowledge/source-rebuild/README.md`](knowledge/source-rebuild/README.md).
+- If an issue requires rebuilding a system source package, replacing a system shared library, or assessing ABI/SONAME/dependency/RPATH risk, read the source-rebuild category entry [`references/source-rebuild.md`](references/source-rebuild.md), then continue into the `knowledge/source-rebuild/` chapters it points to.
 - Do not load this skill for ordinary coding, documentation, Git operations, or unrelated tasks.
 - Follow the loop: diagnosis -> repair -> verification -> record reusable findings.
 - Treat persistent repair as the default goal for system issues; after any runtime workaround, verify whether the fix survives reboot, relogin, service restart, or app restart.
@@ -211,7 +241,7 @@ The skill currently covers the issue types below. `references/` is the category 
 - UKUI autostart failures, missing Settings entries, original `.desktop` repair, icon resolution, and `sort-app-list` / `statusMap` issues: [`references/ukui-autostart.md`](references/ukui-autostart.md)
 - UKUI global shortcut conflicts, Settings reporting that a shortcut is occupied by the system, global search shortcuts, and `Alt+Space` conflicts with the window menu: [`references/ukui-keybindings.md`](references/ukui-keybindings.md)
 - UKUI global-search result sources, Software Center results for uninstalled apps, and disabling or rolling back the Software Center search D-Bus provider: [`references/ukui-search.md`](references/ukui-search.md)
-- Source matching, building, and ABI-risk checks for adding Bing/Google or other hard-coded default web search engines to UKUI global search: [`knowledge/source-rebuild/ukui-search-web-engine.md`](knowledge/source-rebuild/ukui-search-web-engine.md)
+- Source matching, building, and ABI-risk checks for adding Bing/Google or other hard-coded default web search engines to UKUI global search: [`references/source-rebuild.md`](references/source-rebuild.md)
 - UKUI right-side system tray icon order and folded/hidden area persistence, `systemTray.json`, `orderedItems`, and `separateIndex`: [`references/ukui-system-tray.md`](references/ukui-system-tray.md)
 - `ukui-system-service-manager.service` repeated timeouts, `QDBusError("", "")`, `org.ukui.serviceManager` owned by an orphan process, and persistent D-Bus activation repair: [`references/ukui-system-service-manager.md`](references/ukui-system-service-manager.md)
 - Taskbar/tray AI assistant, AI subsystem cleanup, Kaiming AI assistant removal boundaries, and residue cleanup: [`references/kylin-ai-subsystem.md`](references/kylin-ai-subsystem.md)

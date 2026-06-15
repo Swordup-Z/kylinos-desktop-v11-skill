@@ -127,9 +127,14 @@ kylinos-desktop-v11-skill/
 │   └── ...
 ├── knowledge/                # 具体问题处理章节
 │   ├── README.md             # knowledge 与 references 的分工说明
-│   └── source-rebuild/
-│       ├── README.md         # 源码重编译通用流程
-│       └── ukui-search-web-engine.md
+│   ├── system/               # 系统维护、安全边界、系统噪声
+│   ├── applications/         # 应用安装、KARE 边界
+│   ├── ukui/                 # UKUI 自启动、搜索、托盘、服务
+│   ├── network/              # Clash Verge / TUN
+│   ├── hardware/             # 指纹、图形、频率
+│   ├── storage/              # 分区、挂载、overlay
+│   ├── agent-tools/          # Codex/Claude/opencode 全局提示词
+│   └── source-rebuild/       # 源码重编译通用流程和具体案例
 ├── README.md                 # 中文说明
 └── README.en.md              # 英文说明
 ```
@@ -148,11 +153,36 @@ kylinos-desktop-v11-skill/
 ```text
 SKILL.md
   -> references/ukui-search.md
+  -> references/source-rebuild.md
   -> knowledge/source-rebuild/README.md
   -> knowledge/source-rebuild/ukui-search-web-engine.md
 ```
 
 新增经验时也按这个结构落位：`references/` 只放分类入口、最小诊断和指向关系；详细背景、源码定位、修复步骤、验证、回滚和清理规则写入 `knowledge/` 下的具体章节。
+
+### References 与 Knowledge 路由
+
+README 同时介绍 `references/` 和 `knowledge/`：前者是入口和索引，后者是解决思路和步骤。常用路由如下：
+
+| 场景 | Reference 入口 | Knowledge 章节 |
+| --- | --- | --- |
+| 通用系统维护、维护模式、磐石架构边界 | [`references/system-maintenance.md`](references/system-maintenance.md) | [`knowledge/system/system-maintenance.md`](knowledge/system/system-maintenance.md) |
+| 系统体检噪声清理 | [`references/system-health-noise.md`](references/system-health-noise.md) | [`knowledge/system/system-health-noise.md`](knowledge/system/system-health-noise.md) |
+| 应用安装、AppImage、第三方 apt 源 | [`references/application-installation.md`](references/application-installation.md) | [`knowledge/applications/application-installation.md`](knowledge/applications/application-installation.md) |
+| KARE 与宿主机边界 | [`references/kare-namespace.md`](references/kare-namespace.md) | [`knowledge/applications/kare-namespace.md`](knowledge/applications/kare-namespace.md) |
+| Clash Verge / TUN | [`references/clash-verge-tun.md`](references/clash-verge-tun.md) | [`knowledge/network/clash-verge-tun.md`](knowledge/network/clash-verge-tun.md) |
+| UKUI 开机自启动 | [`references/ukui-autostart.md`](references/ukui-autostart.md) | [`knowledge/ukui/autostart.md`](knowledge/ukui/autostart.md) |
+| UKUI 全局快捷键 | [`references/ukui-keybindings.md`](references/ukui-keybindings.md) | [`knowledge/ukui/keybindings.md`](knowledge/ukui/keybindings.md) |
+| UKUI 全局搜索 | [`references/ukui-search.md`](references/ukui-search.md) | [`knowledge/ukui/search.md`](knowledge/ukui/search.md) |
+| 源码重编译类修复 | [`references/source-rebuild.md`](references/source-rebuild.md) | [`knowledge/source-rebuild/README.md`](knowledge/source-rebuild/README.md)、[`knowledge/source-rebuild/ukui-search-web-engine.md`](knowledge/source-rebuild/ukui-search-web-engine.md) |
+| UKUI 右侧托盘 | [`references/ukui-system-tray.md`](references/ukui-system-tray.md) | [`knowledge/ukui/system-tray.md`](knowledge/ukui/system-tray.md) |
+| UKUI 系统服务管理器 | [`references/ukui-system-service-manager.md`](references/ukui-system-service-manager.md) | [`knowledge/ukui/system-service-manager.md`](knowledge/ukui/system-service-manager.md) |
+| AI 子系统清理 | [`references/kylin-ai-subsystem.md`](references/kylin-ai-subsystem.md) | [`knowledge/ukui/kylin-ai-subsystem.md`](knowledge/ukui/kylin-ai-subsystem.md) |
+| 指纹/生物识别 | [`references/biometric-fingerprint.md`](references/biometric-fingerprint.md) | [`knowledge/hardware/biometric-fingerprint.md`](knowledge/hardware/biometric-fingerprint.md) |
+| 图形、频率与硬件稳定性 | [`references/graphics-frequency.md`](references/graphics-frequency.md) | [`knowledge/hardware/graphics-frequency.md`](knowledge/hardware/graphics-frequency.md) |
+| 分区、挂载、overlay | [`references/storage-layout.md`](references/storage-layout.md) | [`knowledge/storage/layout.md`](knowledge/storage/layout.md) |
+| Codex 配置 | [`references/codex-config.md`](references/codex-config.md) | [`knowledge/agent-tools/codex-config.md`](knowledge/agent-tools/codex-config.md) |
+| 多 AI 工具全局提示词 | [`references/agent-global-prompts.md`](references/agent-global-prompts.md) | [`knowledge/agent-tools/global-prompts.md`](knowledge/agent-tools/global-prompts.md) |
 
 ## 核心基础要求
 
@@ -161,7 +191,7 @@ SKILL.md
 - 只要任务涉及 KylinOS Desktop V11 桌面系统维护场景，就先读取 [`SKILL.md`](SKILL.md)，再根据其中“参考文档”按需读取具体 `references/*.md`；不要一次性预加载所有 reference。
 - `references/` 作为场景分类和路由入口，`knowledge/` 作为具体问题处理章节；reference 指向 knowledge 时才继续读取对应章节。
 - 如果没有命中专门 reference，至少读取通用系统维护文档 [`references/system-maintenance.md`](references/system-maintenance.md)。
-- 如果问题需要重新编译系统源码包、替换系统共享库或评估 ABI/SONAME/依赖/RPATH 风险，先读取具体场景 reference，再读取 [`knowledge/source-rebuild/README.md`](knowledge/source-rebuild/README.md)。
+- 如果问题需要重新编译系统源码包、替换系统共享库或评估 ABI/SONAME/依赖/RPATH 风险，先读取源码重编译分类入口 [`references/source-rebuild.md`](references/source-rebuild.md)，再按它指向的 `knowledge/source-rebuild/` 章节继续处理。
 - 普通代码开发、文档编辑、Git 操作或其他无关任务不要加载该 skill。
 - 按“诊断 -> 修复 -> 验证 -> 沉淀经验”的闭环处理问题。
 - 系统问题默认以持久化修复为目标；临时止血后，还要确认重启、重新登录、服务重拉起或应用重启后是否仍然有效。
@@ -211,7 +241,7 @@ SKILL.md
 - UKUI 开机自启动不生效、设置界面不显示新增启动项、原始 `.desktop` 修复、图标解析、`sort-app-list` / `statusMap` 异常：[`references/ukui-autostart.md`](references/ukui-autostart.md)
 - UKUI 全局快捷键冲突、设置界面提示快捷键被系统占用、全局搜索快捷键、`Alt+Space` 与窗口菜单冲突：[`references/ukui-keybindings.md`](references/ukui-keybindings.md)
 - UKUI 全局搜索结果来源、应用商店未安装应用结果、软件商店搜索 D-Bus 插件屏蔽与回滚：[`references/ukui-search.md`](references/ukui-search.md)
-- UKUI 全局搜索默认互联网搜索引擎写死、需要通过源码级修改添加 Bing/Google 等选项时的源码匹配、构建和 ABI 风险评估：[`knowledge/source-rebuild/ukui-search-web-engine.md`](knowledge/source-rebuild/ukui-search-web-engine.md)
+- UKUI 全局搜索默认互联网搜索引擎写死、需要通过源码级修改添加 Bing/Google 等选项时的源码匹配、构建和 ABI 风险评估：[`references/source-rebuild.md`](references/source-rebuild.md)
 - UKUI 右侧托盘小图标顺序和隐藏区不持久、`systemTray.json`、`orderedItems`、`separateIndex`：[`references/ukui-system-tray.md`](references/ukui-system-tray.md)
 - `ukui-system-service-manager.service` 反复 timeout、`QDBusError("", "")`、`org.ukui.serviceManager` 被孤儿进程占用、D-Bus activation 持久化修复：[`references/ukui-system-service-manager.md`](references/ukui-system-service-manager.md)
 - 任务栏/托盘 AI 助手、AI 子系统、Kaiming AI 助手卸载边界和残留清理：[`references/kylin-ai-subsystem.md`](references/kylin-ai-subsystem.md)

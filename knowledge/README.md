@@ -21,15 +21,13 @@
 
 ```text
 knowledge/source-rebuild/
-```
-
-后续可继续增加：
-
-```text
-knowledge/app-installation/
-knowledge/ukui-settings/
+knowledge/system/
+knowledge/applications/
+knowledge/ukui/
+knowledge/network/
 knowledge/hardware/
 knowledge/storage/
+knowledge/agent-tools/
 ```
 
 目录下应包含一个 `README.md` 说明该分类的通用流程；具体问题使用独立章节文件，例如：
