@@ -9,6 +9,7 @@
 - `ukui-system-service-manager.service` timeout。
 - `QDBusError("", "")`。
 - `org.ukui.serviceManager` 被孤儿进程占用。
+- 登录、唤醒或重启后 UKUI 面板/任务栏异常，同时日志出现 `com.ukui.search.qt.systemdbus` 或 `org.ukui.serviceManager` activation timeout。
 
 ## 先读知识章节
 
@@ -17,6 +18,7 @@
 ## 最小诊断
 
 ```bash
-systemctl --user status ukui-system-service-manager.service --no-pager
-busctl --user list | rg 'ukui.serviceManager|serviceManager' || true
+systemctl status ukui-system-service-manager.service --no-pager
+systemctl show ukui-system-service-manager.service -p After -p Before -p WantedBy --no-pager
+busctl --system list | rg 'ukui.serviceManager|serviceManager' || true
 ```
