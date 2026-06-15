@@ -79,6 +79,33 @@ du -sh /opt/kare-applications/*/merge
 
 分区调整前必须先备份重要数据，并在维护模式或离线环境中操作；不要在未确认分区顺序、文件系统类型、备份分区用途和回滚方案前执行缩容、移动或删除分区。
 
+## 分区回滚资料保存位置
+
+分区、挂载、`fstab`、`sfdisk`、`parted`、`blkid`、backup 分区快照等非源码类系统回滚资料，不应长期散放在 `$HOME` 根目录，也不应放入源码客制化目录。统一保存到 DATA 分区共享回滚目录：
+
+```text
+/data/usershare/kylinos-system-rollbacks/storage/<scenario>/<timestamp>/
+```
+
+例如根分区和 backup 分区调整资料：
+
+```text
+/data/usershare/kylinos-system-rollbacks/storage/partition-resize/<timestamp>/
+```
+
+建议至少包含：
+
+```text
+<disk>.sfdisk
+<disk>.parted.txt
+blkid.txt
+fstab.before-resize
+fstab.after-resize
+<partition>/backup-partition.tar
+```
+
+若目录原先临时建在 `$HOME` 下，确认内容属于回滚资料后，应移动到上述目录，并在 `/data/usershare/kylinos-system-rollbacks/README.md` 记录索引。源码重编译和本地客制化源码的回滚包仍按源码重编译知识库要求保存到 `/data/usershare/kylinos-local-sources/<component-or-fix>/rollback/<timestamp>/`。
+
 ## 根分区后紧邻 backup 分区时的扩容
 
 如果 GPT 顺序类似：
