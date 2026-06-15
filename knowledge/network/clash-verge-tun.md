@@ -1,6 +1,6 @@
 # Clash Verge TUN
 
-此流程用于 Kylin Desktop V11 上由 KARE 打包的 Clash Verge Rev。应用数据目录通常是：
+此流程用于 Kylin Desktop V11 上的 Clash Verge Rev TUN 问题，覆盖 KARE 打包版以及从 KARE 迁移到宿主机原生安装后的残留问题。应用数据目录通常是：
 
 ```bash
 ~/.local/share/io.github.clash-verge-rev.clash-verge-rev
@@ -12,6 +12,7 @@
 - 诊断
 - 修复 TUN 设备
 - 安装 Clash Verge 服务
+- 从 KARE 迁移到宿主机原生包
 - 在 Clash Verge 中启用 TUN
 - 如果代理组消失
 - 最终验证
@@ -122,6 +123,79 @@ ExecStart=/var/opt/kare-applications/shadow/upper/usr/bin/clash-verge-service
 /tmp/verge/clash-verge-service.sock
 ```
 
+## 从 KARE 迁移到宿主机原生包
+
+如果用户从 KARE 打包版改为宿主机原生 `.deb` 安装，不能只看 `clash-verge` 命令是否存在，还要同时确认包归属、桌面入口、服务单元和运行进程都已离开 KARE 路径。
+
+先确认当前 shell 位于宿主机 namespace，且系统处于维护模式：
+
+```bash
+mm-cli -s
+hostname
+readlink /proc/$$/ns/mnt
+readlink /proc/$$/ns/uts
+```
+
+宿主机原生安装的典型特征：
+
+```bash
+command -v clash-verge
+command -v verge-mihomo
+dpkg -l | rg -i 'clash|verge|mihomo'
+dpkg -S /usr/bin/clash-verge /usr/bin/verge-mihomo /usr/bin/clash-verge-service /usr/bin/clash-verge-service-install 2>/dev/null || true
+sed -n '1,80p' /usr/share/applications/*Clash* 2>/dev/null
+```
+
+预期结果是 `clash-verge` 包提供 `/usr/bin/clash-verge`、`/usr/bin/verge-mihomo`、`/usr/bin/clash-verge-service` 和 `/usr/bin/clash-verge-service-install`，桌面入口使用：
+
+```text
+Exec=clash-verge %u
+```
+
+如果仍看到 `Exec=/usr/bin/kare run ...`，或路径位于 `/opt/kare`、`/opt/kare-applications`，说明还没有完全切换到宿主机原生入口。
+
+迁移后要特别检查旧服务单元是否残留 KARE 路径：
+
+```bash
+systemctl status clash-verge-service --no-pager
+sed -n '1,120p' /etc/systemd/system/clash-verge-service.service
+```
+
+如果服务报 `status=203/EXEC`，且 `ExecStart=` 仍指向：
+
+```text
+/var/opt/kare-applications/shadow/upper/usr/bin/clash-verge-service
+```
+
+说明旧 KARE 服务单元覆盖了新包。应在维护模式下把 `ExecStart=` 修正为宿主机路径：
+
+```ini
+ExecStart=/usr/bin/clash-verge-service
+```
+
+然后重新加载并启用服务：
+
+```bash
+pkexec systemctl daemon-reload
+pkexec systemctl enable --now clash-verge-service
+```
+
+如果服务 core 和图形界面 sidecar 同时运行，可能出现端口冲突：
+
+```text
+Start Mixed(http+socks) server error: listen tcp 127.0.0.1:<port>: bind: address already in use
+```
+
+此时检查进程父子关系：
+
+```bash
+pgrep -a 'clash-verge|verge-mihomo' || true
+ps -o pid,ppid,user,group,comm,args -p <pid-list>
+ss -ltnup 2>/dev/null | rg ':53|:<mixed-port>|verge-mihomo' || true
+```
+
+若普通用户 `verge-mihomo` 是由图形进程拉起，而 systemd 服务也在运行，应完整退出 Clash Verge 图形进程，再重启 `clash-verge-service`，让图形进程在服务已就绪的状态下重新连接服务。不要删除或覆盖 `verge-mihomo`。
+
 ## 在 Clash Verge 中启用 TUN
 
 服务和 TUN 设备正常后，让用户从托盘完全退出 Clash Verge，再重新启动。然后在 Clash Verge 界面中启用 TUN 模式。
@@ -172,3 +246,4 @@ sudo cp /opt/kare-applications/shadow/upper/usr/bin/verge-mihomo /usr/bin/verge-
 - `/tmp/verge/clash-verge-service.sock` 存在。
 - `verge-mihomo` 存在于 Clash Verge 期望的路径；如果当前环境依赖 `/usr/bin/verge-mihomo`，必须特别确认这个路径。
 - TUN 是否已经在应用配置中启用，或者仍等待用户在界面中切换。
+- 如果已经启用 TUN，`ip -br link show` 中应出现 `Meta` 等 TUN 网卡，服务日志应出现类似 `[TUN] Tun adapter listening`；同时确认没有普通用户 sidecar 与 systemd 服务 core 同时抢占代理端口。
