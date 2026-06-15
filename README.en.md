@@ -112,7 +112,47 @@ After setup, describe the system issue directly, for example:
 Clash Verge cannot install TUN mode. Please diagnose it.
 ```
 
-The AI tool should read `SKILL.md`, selectively load the relevant `references/*.md`, and follow the flow: diagnosis -> repair -> verification -> record reusable findings.
+The AI tool should read `SKILL.md`, selectively load the relevant `references/*.md`, continue into `knowledge/` only when the selected reference points there, and then follow the flow: diagnosis -> repair -> verification -> record reusable findings.
+
+## Repository Structure And Routing
+
+This repository uses progressive disclosure so AI tools do not load unnecessary context up front.
+
+```text
+kylinos-desktop-v11-skill/
+├── SKILL.md                  # Main entry: classify the issue and choose the minimal reference
+├── references/               # Scenario categories and routing entries, like a dictionary index
+│   ├── system-maintenance.md  # Maintenance mode, safety boundaries, and the minimal loop
+│   ├── ukui-search.md         # UKUI global-search category entry
+│   └── ...
+├── knowledge/                # Concrete troubleshooting chapters
+│   ├── README.md             # How knowledge/ differs from references/
+│   └── source-rebuild/
+│       ├── README.md         # General source-rebuild workflow
+│       └── ukui-search-web-engine.md
+├── README.md                 # Chinese README
+└── README.en.md              # English README
+```
+
+Recommended loading path:
+
+```text
+User issue
+  -> SKILL.md
+  -> references/<minimal-matching-scenario>.md
+  -> knowledge/<category>/<chapter>.md (only when the reference points there or the issue requires deeper handling)
+```
+
+For example, when handling “UKUI global search has hard-coded default web engines and needs Bing/Google”:
+
+```text
+SKILL.md
+  -> references/ukui-search.md
+  -> knowledge/source-rebuild/README.md
+  -> knowledge/source-rebuild/ukui-search-web-engine.md
+```
+
+New findings should follow the same structure: keep `references/` as the category entry, minimal diagnosis, and routing layer; put detailed background, source matching, repair steps, verification, rollback, and cleanup rules under the relevant `knowledge/` chapter.
 
 ## Core Requirements
 

@@ -112,7 +112,47 @@ opencode resume os-fix
 Clash Verge 无法安装 TUN 模式，请帮我诊断。
 ```
 
-AI 工具应先读取 `SKILL.md`，再按需读取相关 `references/*.md`，然后按“诊断 -> 修复 -> 验证 -> 记录经验”的流程处理。
+AI 工具应先读取 `SKILL.md`，再按需读取相关 `references/*.md`；如果 reference 指向 `knowledge/` 章节，再继续读取对应知识文件，然后按“诊断 -> 修复 -> 验证 -> 记录经验”的流程处理。
+
+## 目录结构与路由路径
+
+这个仓库按渐进式披露组织，避免 AI 工具一开始就加载过多上下文。
+
+```text
+kylinos-desktop-v11-skill/
+├── SKILL.md                  # 总入口：判断问题大类和选择最小 reference
+├── references/               # 场景分类和路由入口，类似词典目录
+│   ├── system-maintenance.md  # 通用维护模式、安全边界和最小闭环
+│   ├── ukui-search.md         # UKUI 全局搜索分类入口
+│   └── ...
+├── knowledge/                # 具体问题处理章节
+│   ├── README.md             # knowledge 与 references 的分工说明
+│   └── source-rebuild/
+│       ├── README.md         # 源码重编译通用流程
+│       └── ukui-search-web-engine.md
+├── README.md                 # 中文说明
+└── README.en.md              # 英文说明
+```
+
+推荐加载路径：
+
+```text
+用户问题
+  -> SKILL.md
+  -> references/<最小匹配场景>.md
+  -> knowledge/<分类>/<具体章节>.md（只有 reference 指向或问题需要深度处理时才读取）
+```
+
+例如处理“UKUI 全局搜索默认搜索引擎写死，需要添加 Bing/Google”：
+
+```text
+SKILL.md
+  -> references/ukui-search.md
+  -> knowledge/source-rebuild/README.md
+  -> knowledge/source-rebuild/ukui-search-web-engine.md
+```
+
+新增经验时也按这个结构落位：`references/` 只放分类入口、最小诊断和指向关系；详细背景、源码定位、修复步骤、验证、回滚和清理规则写入 `knowledge/` 下的具体章节。
 
 ## 核心基础要求
 
