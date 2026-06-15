@@ -195,6 +195,8 @@ When using this skill for system troubleshooting, the AI tool must follow these 
 - Do not load this skill for ordinary coding, documentation, Git operations, or unrelated tasks.
 - Follow the loop: diagnosis -> repair -> verification -> record reusable findings.
 - Treat persistent repair as the default goal for system issues; after any runtime workaround, verify whether the fix survives reboot, relogin, service restart, or app restart.
+- Do not treat restoring official packages, deleting local customizations, reverting source-level changes, or reinstalling components as the default first step. First establish evidence from logs, call chains, package verification, and reproduction. Only temporarily restore the official version when the evidence points to the customization, or when the user confirms an A/B test and a backup/rollback path exists.
+- Workarounds, watchdogs, scheduled restarts, or automatic relaunch mechanisms are temporary recovery measures. Prefer root-cause diagnosis and direct repair first.
 - Before system-level repairs, run `mm-cli -s` to check maintenance mode; outside maintenance mode, only perform non-destructive diagnostics such as reading state or simulating installs/removals.
 - If the system is not in maintenance mode, enter maintenance mode and ask the user to reboot; after the fix is complete, exit maintenance mode and ask the user to reboot again to return to normal mode.
 - Do not delete, move, or overwrite existing executables, configs, subscription files, proxy cores, systemd units, or user data unless the user explicitly asks and the impact has been verified.
