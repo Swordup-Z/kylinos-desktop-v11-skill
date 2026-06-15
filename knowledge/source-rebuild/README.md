@@ -77,6 +77,48 @@ mm-cli -c -a
 
 随后要求用户重启回到 normal mode。
 
+## 本地客制化源码工作区与索引
+
+进行本地源码修改、构建和试装时，除必须由系统包管理器安装到默认系统路径的依赖组件外，源码、构建目录、staging、回滚包、符号对比文件和其他中间产物都应优先放到 DATA 分区的共享工作区，避免占用根分区：
+
+```text
+/data/usershare/kylinos-local-sources/<component-or-fix>/
+```
+
+每个本地客制化问题应创建独立目录，并至少包含：
+
+```text
+/data/usershare/kylinos-local-sources/<component-or-fix>/CUSTOMIZATION.md
+/data/usershare/kylinos-local-sources/<component-or-fix>/<source-tree>/
+/data/usershare/kylinos-local-sources/<component-or-fix>/build/
+/data/usershare/kylinos-local-sources/<component-or-fix>/rollback/<timestamp>/
+```
+
+`CUSTOMIZATION.md` 用来保存后续继续修改所需的信息，不写进一次性聊天记录。建议记录：
+
+- 目标问题和预期行为。
+- 源码来源、候选 git 节点、当前工作分支。
+- 是否是本机客制化工作树；如果用户没有要求，不需要提交本地源码 git commit。
+- 修改过的源码文件和安装目标系统文件。
+- 构建命令、构建目录、构建依赖和已知构建注意事项。
+- 安装前 ABI/依赖/RPATH/导出符号验证结果。
+- 试装时间、staged 文件、系统备份和回滚脚本路径。
+- 安装后验证结果、仍需用户重启或手工验证的项目。
+
+回滚脚本应和对应回滚包放在同一目录，例如：
+
+```text
+/data/usershare/kylinos-local-sources/<component-or-fix>/rollback/<timestamp>/restore.sh
+```
+
+如果某个本地客制化修改已经被正式安装并持续使用，应把对应回滚包长期保存。可以保留在该问题目录的 `rollback/<timestamp>/` 下，也可以按组件迁移到：
+
+```text
+/data/usershare/kylinos-local-sources/persistent-rollbacks/<component>/<timestamp>/
+```
+
+迁移后必须更新 `CUSTOMIZATION.md` 中的回滚路径。
+
 ## 源码获取与候选节点收敛
 
 源码入口按可信度排序：
@@ -165,26 +207,25 @@ strings <candidate-output> | rg '<expected-feature>|<known-system-string>'
 - 仍处于手动替换系统文件状态时，至少保留最小回滚备份。
 - 最小回滚备份包含 `system-backup/`、`restore.sh` 和 `SHA256SUMS`，不包含 `staged/`、`original-build/`、完整源码树或构建目录。
 - `restore.sh` 已覆盖本次所有系统级改动：恢复被替换的文件，并删除本次新增但原系统不存在的资源文件。
+- 如果用户希望保留本地源码方便后续继续修改，不要清理源码工作树；只清理不再需要的构建缓存或重复中间产物，并更新该工作区的 `CUSTOMIZATION.md`。
 
 推荐把最小回滚备份移动到用户级固定位置，例如：
 
 ```text
-$HOME/.local/share/kylinos-desktop-v11-skill/rollback/<component>-<timestamp>/
+/data/usershare/kylinos-local-sources/<component-or-fix>/rollback/<timestamp>/
 ```
 
 再删除纯中间产物：
 
 ```bash
-rm -rf "$HOME/<source-clone-dir>" "$HOME/<build-worktree-dir>" "$HOME/<local-test-package-dir>"
+rm -rf "/data/usershare/kylinos-local-sources/<component-or-fix>/<obsolete-build-dir>"
 ```
 
 清理后验证：
 
 ```bash
-test ! -e "$HOME/<source-clone-dir>"
-test ! -e "$HOME/<build-worktree-dir>"
-du -sh "$HOME/.local/share/kylinos-desktop-v11-skill/rollback/<component>-<timestamp>"
-sha256sum -c "$HOME/.local/share/kylinos-desktop-v11-skill/rollback/<component>-<timestamp>/SHA256SUMS"
+du -sh "/data/usershare/kylinos-local-sources/<component-or-fix>"
+sha256sum -c "/data/usershare/kylinos-local-sources/<component-or-fix>/rollback/<timestamp>/SHA256SUMS"
 ```
 
 如果已经改为 `.deb` 安装且包管理器可完整回滚，可不保留用户级回滚备份；但必须记录可执行的包管理器回滚命令。

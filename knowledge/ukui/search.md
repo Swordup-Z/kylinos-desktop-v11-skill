@@ -6,6 +6,7 @@
 
 - 全局搜索结果中出现应用商店里的未安装应用，用户希望只显示本机应用或本地结果。
 - 设置界面的全局搜索选项没有提供对应开关。
+- 通过源码级修改在设置界面新增“是否搜索应用商店应用”的正式开关。
 - 需要区分文件索引、AI 索引、本机应用索引和软件商店在线/商店结果来源。
 - 设置界面的“默认互联网搜索引擎”只提供少数固定选项，用户希望添加 Bing、Google 等搜索引擎。
 
@@ -196,3 +197,57 @@ busctl --user call org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DB
 - 该方案只屏蔽“全局搜索从软件商店拉取结果”的 D-Bus 激活链路，不卸载 `kylin-software-center`。
 - 软件商店应用本体、系统包管理和本机应用搜索不应受影响。
 - 这是用户级持久化配置，不需要维护模式；如果改成移动、删除或覆盖 `/usr/share/dbus-1/services/` 下的系统 service，则属于系统级修复，必须先检查维护模式。
+
+## 源码级正式开关
+
+如果用户明确要求在设置界面提供正式开关，而不是用户级 D-Bus workaround，应进入源码重编译流程：先读取 [`../../references/source-rebuild.md`](../../references/source-rebuild.md)，并把源码、构建目录、回滚包和 `CUSTOMIZATION.md` 放到 `/data/usershare/kylinos-local-sources/<component-or-fix>/`。
+
+最小实现通常涉及 `ukui-search` 本体，不需要修改软件商店本体：
+
+- `data/org.ukui.search.data.gschema.xml`
+  - 新增布尔 key，例如 `software-center-search-enable`，默认 `false`。
+- `search-ukcc-plugin/search.cpp` / `search.h`
+  - 在全局搜索设置页新增开关。
+  - 开关读写 `softwareCenterSearchEnable`。
+- `libsearch/searchinterface/searchtasks/app-search-task.cpp`
+  - 在调用 `com.kylin.softwarecenter.getsearchresults` 前读取 `softwareCenterSearchEnable`。
+  - 开关关闭时不调用软件商店 D-Bus provider。
+
+如果系统之前使用过用户级 D-Bus 覆盖：
+
+```text
+$HOME/.local/share/dbus-1/services/com.kylin.softwarecenter.getsearchresults.service
+```
+
+安装正式开关前应备份并移除该覆盖文件，再重载用户 D-Bus 配置。否则即使设置界面打开“搜索应用商店应用”，用户级覆盖仍可能把 provider 指向 `/bin/false`，导致正式开关无法重新启用商店结果。
+
+安装后默认关闭：
+
+```bash
+gsettings set org.ukui.search.settings software-center-search-enable false
+```
+
+运行时刷新：
+
+```bash
+pkill -f /usr/bin/kylin-software-center-plugin-synchrodata 2>/dev/null || true
+ukui-search --quit 2>/dev/null || true
+ukui-search-service --quit 2>/dev/null || true
+busctl --user call org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus ReloadConfig
+```
+
+验证：
+
+```bash
+gsettings get org.ukui.search.settings software-center-search-enable
+strings /usr/lib/*/libukui-search.so.* | rg 'softwareCenterSearchEnabled|com\.kylin\.softwarecenter'
+strings /usr/lib/*/ukui-control-center/libsearch-ukcc-plugin.so | rg 'Search Software Store apps|softwareCenterSearchEnable'
+busctl --user list | rg 'com.kylin.softwarecenter.getsearchresults|ukui.search' || true
+```
+
+预期：
+
+- `software-center-search-enable` 默认为 `false`。
+- 设置插件包含新开关字符串。
+- 软件商店 provider 不应常驻；如果只是 `(activatable)`，说明它还没有被当前搜索主动拉起。
+- 设置中打开该开关后，才允许全局搜索调用软件商店 provider。

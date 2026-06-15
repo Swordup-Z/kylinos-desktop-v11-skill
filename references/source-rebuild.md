@@ -9,6 +9,7 @@
 - 系统设置界面或后端逻辑写死，配置级方案无法满足需求。
 - 需要替换系统共享库、控制中心插件或系统服务。
 - 需要评估源码版本、候选 git 节点、ABI/SONAME/依赖/RPATH 风险。
+- 需要保存本地客制化源码、构建目录、回滚包和后续继续修改所需索引。
 
 ## 先读知识章节
 
@@ -21,4 +22,5 @@
 dpkg-query -W -f='${binary:Package} ${Version} ${Source}\n' <package>
 apt-cache policy <package>
 apt-cache showsrc <source-package> 2>&1 | sed -n '1,80p'
+test -d /data/usershare/kylinos-local-sources && find /data/usershare/kylinos-local-sources -maxdepth 2 -name CUSTOMIZATION.md -print
 ```
