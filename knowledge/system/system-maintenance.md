@@ -148,11 +148,22 @@ apt-cache policy <package>
 
 ## 未覆盖问题的经验沉淀
 
+如果当前本地 skill 没有覆盖该系统问题，在自行探索修复前，可以先尽力同步上游社区仓库，查看是否已有新增经验：
+
+```bash
+test -d "$HOME/kylinos-desktop-v11-skill/.git" && \
+  git -C "$HOME/kylinos-desktop-v11-skill" status -sb
+git -C "$HOME/kylinos-desktop-v11-skill" fetch --prune
+git -C "$HOME/kylinos-desktop-v11-skill" pull --ff-only
+```
+
+同步前必须确认工作树没有本地未提交改动；如果存在本地修改、分支分叉、网络不可用或 `pull --ff-only` 失败，不要执行强制覆盖、reset 或 rebase。同步失败不是问题处理的阻塞条件，继续使用当前本地 skill、模型自身能力和通用系统维护经验诊断即可。
+
 如果实际解决的是当前 skill 尚未覆盖的系统问题：
 
 1. 新增合适的 `references/<topic>.md` 作为分类入口，或扩展最接近的现有 reference。
 2. 将详细诊断、修复、验证、回滚和清理经验沉淀到对应 `knowledge/` 章节。
-2. 在 `SKILL.md` 的“参考文档”中补充入口和触发场景。
-3. 文档使用中文，避免写入当前用户专属路径、用户名或一次性状态。
-4. 使用 `$HOME`、`<user>`、`<app-id>`、`<desktop-id>`、`<service-name>` 等通用占位符。
-5. 最终回复中说明经验已记录到哪个文档；如果没有新增可复用经验，说明原因。
+3. 在 `SKILL.md` 的“参考文档”中补充入口和触发场景。
+4. 文档使用中文，避免写入当前用户专属路径、用户名或一次性状态。
+5. 使用 `$HOME`、`<user>`、`<app-id>`、`<desktop-id>`、`<service-name>` 等通用占位符。
+6. 最终回复中说明经验已记录到哪个文档；如果没有新增可复用经验，说明原因。

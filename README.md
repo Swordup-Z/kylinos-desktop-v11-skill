@@ -24,11 +24,12 @@ https://github.com/Swordup-Z/kylinos-desktop-v11-skill
    - Claude Code: $HOME/.claude/CLAUDE.md
    - opencode: $HOME/.config/opencode/AGENTS.md
 3. 在全局提示词中加入规则：处理 KylinOS Desktop V11、UKUI、KARE、Kaiming、Clash Verge、系统服务、开机自启动、TUN、维护模式、磐石架构、系统保护、分区、挂载、overlay、AI 子系统等桌面系统问题时，先读取 $HOME/kylinos-desktop-v11-skill/SKILL.md，再按其中“参考文档”选择性读取 references/*.md；如果 reference 指向 knowledge/ 下的具体知识章节，再按需读取对应 knowledge；如果没有命中专门 reference，至少读取 references/system-maintenance.md；如果当前任务不是桌面系统问题，不要加载该 skill。
-4. 系统级修复前必须先运行 mm-cli -s 检查维护模式；非维护模式只允许诊断，不要实际修改 /usr、/etc、/opt、系统包、系统服务、设备节点、分区或 KSaf 策略。
-5. 问题确认修复后，如果产生新的可复用经验，应更新到该 skill 的 SKILL.md、references/*.md 路由或 knowledge/ 下的具体章节；如果该问题原本未被当前 skill 覆盖，应新增合适的 reference 作为分类入口，并把详细经验沉淀到 knowledge/。
-6. 执行任何 git commit 时，提交作者、提交正文和提交 trailer 不得包含 AI 相关署名或协作生成信息。
-7. 建议后续处理系统问题时专门使用一个固定会话名，例如 os-fix；如果当前 AI 工具支持恢复命令，后续可用 <tool> resume os-fix 恢复同一个系统修复上下文。
-8. 安装完成后验证：读取 $HOME/kylinos-desktop-v11-skill/SKILL.md，并告诉我后续处理 KylinOS Desktop V11 系统问题时会先使用哪个 skill 入口。
+4. 如果本地 skill 已读取但没有覆盖当前系统问题，在自行探索修复前，可以先尽力同步 $HOME/kylinos-desktop-v11-skill 的 GitHub 仓库：先确认它是 git 仓库且工作树无本地改动，再使用 git fetch、git status -sb、git pull --ff-only 查看是否有新增经验；不要用 reset、rebase 或强制覆盖本地改动。同步失败不阻塞问题处理，继续用当前资料、模型能力和通用经验诊断。
+5. 系统级修复前必须先运行 mm-cli -s 检查维护模式；非维护模式只允许诊断，不要实际修改 /usr、/etc、/opt、系统包、系统服务、设备节点、分区或 KSaf 策略。
+6. 问题确认修复后，如果产生新的可复用经验，应更新到该 skill 的 SKILL.md、references/*.md 路由或 knowledge/ 下的具体章节；如果该问题原本未被当前 skill 覆盖，应新增合适的 reference 作为分类入口，并把详细经验沉淀到 knowledge/。
+7. 执行任何 git commit 时，提交作者、提交正文和提交 trailer 不得包含 AI 相关署名或协作生成信息。
+8. 建议后续处理系统问题时专门使用一个固定会话名，例如 os-fix；如果当前 AI 工具支持恢复命令，后续可用 <tool> resume os-fix 恢复同一个系统修复上下文。
+9. 安装完成后验证：读取 $HOME/kylinos-desktop-v11-skill/SKILL.md，并告诉我后续处理 KylinOS Desktop V11 系统问题时会先使用哪个 skill 入口。
 ```
 
 ### 方式二：手动安装
@@ -52,6 +53,8 @@ $HOME/kylinos-desktop-v11-skill/SKILL.md
 
 ```markdown
 处理 KylinOS Desktop V11、UKUI、KARE、Kaiming、Clash Verge、系统服务、开机自启动、TUN、维护模式、磐石架构、系统保护、分区、挂载、overlay、AI 子系统等桌面操作系统问题时，先读取 `$HOME/kylinos-desktop-v11-skill/SKILL.md`，再按其中“参考文档”选择性读取对应 `references/*.md`。如果 reference 指向 `knowledge/` 下的具体知识章节，再按需读取对应 knowledge。如果没有命中专门 reference，至少读取 `references/system-maintenance.md`。如果当前任务不是桌面系统问题，不要加载该 skill；不要一次性预加载全部 reference 或 knowledge。
+
+如果本地 skill 已读取但没有覆盖当前系统问题，在自行探索修复前，可以先尽力同步 `$HOME/kylinos-desktop-v11-skill` 的 GitHub 仓库，查看是否已有新增经验。同步前先确认该目录是 git 仓库且工作树无本地改动；只使用 `git fetch`、`git status -sb`、`git pull --ff-only` 这类非破坏流程。若本地有未提交改动、分支分叉、网络不可用或 fast-forward 失败，不要强制覆盖，也不要把同步失败作为阻塞错误；继续基于当前资料、模型能力和通用系统维护经验诊断。
 
 系统级修复前必须先运行 `mm-cli -s` 检查维护模式。只有确认当前是 maintain mode，才允许修改 `/usr`、`/etc`、`/opt`、系统包、系统服务、设备节点、分区、KSaf 策略等。
 
@@ -192,6 +195,7 @@ README 同时介绍 `references/` 和 `knowledge/`：前者是入口和索引，
 - 只要任务涉及 KylinOS Desktop V11 桌面系统维护场景，就先读取 [`SKILL.md`](SKILL.md)，再根据其中“参考文档”按需读取具体 `references/*.md`；不要一次性预加载所有 reference。
 - `references/` 作为场景分类和路由入口，`knowledge/` 作为具体问题处理章节；reference 指向 knowledge 时才继续读取对应章节。
 - 如果没有命中专门 reference，至少读取通用系统维护文档 [`references/system-maintenance.md`](references/system-maintenance.md)。
+- 如果本地 skill 已读取但没有覆盖当前系统问题，在自行探索修复前，可以先尽力同步本仓库的 GitHub 上游，查看是否已有新增经验；同步前必须确认工作树干净，只允许 `fetch` 和 `pull --ff-only`，不得强制覆盖本地改动。同步失败不阻塞问题处理，继续用当前资料、模型能力和通用经验诊断。
 - 如果问题需要重新编译系统源码包、替换系统共享库、评估 ABI/SONAME/依赖/RPATH 风险，或保存本地客制化源码、构建目录和回滚包索引，先读取源码重编译分类入口 [`references/source-rebuild.md`](references/source-rebuild.md)，再按它指向的 `knowledge/source-rebuild/` 章节继续处理；本地客制化项目必须在 `/data/usershare/kylinos-local-sources/<component-or-fix>/CUSTOMIZATION.md` 记录索引。
 - 普通代码开发、文档编辑、Git 操作或其他无关任务不要加载该 skill。
 - 按“诊断 -> 修复 -> 验证 -> 沉淀经验”的闭环处理问题。
