@@ -289,16 +289,18 @@ mm-cli -s
 
 Only proceed with system-level changes after confirming maintenance mode.
 
-If the system is not in maintenance mode, do not continue with system modifications. First enter maintenance mode:
-
-```bash
-sudo mm-cli -o
-```
-
-Or, in a graphical/Polkit environment:
+If the system is not in maintenance mode, do not continue with system modifications. In a graphical/Polkit session where the AI tool can run commands, prefer proactively running the following command to trigger an authorization prompt:
 
 ```bash
 pkexec mm-cli -o
+```
+
+After authorization succeeds, the system usually asks for a reboot into maintenance mode. Reboot, then reopen the AI tool to continue the repair.
+
+Only if the prompt cannot be triggered, `pkexec` fails, or the user does not want to authorize it, ask the user to run:
+
+```bash
+sudo mm-cli -o
 ```
 
 After that, reboot the system and reopen the AI tool to continue the repair. Before entering maintenance mode and rebooting, only perform non-destructive diagnostics such as reading state, checking logs, or simulating installs/removals.
