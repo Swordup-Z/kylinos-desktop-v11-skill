@@ -14,8 +14,11 @@
 - 默认不支持 shell 字符串拼接；如确需复杂 shell，应由用户明确配置 `command=/bin/sh`、`args=["-c", "..."]` 并承担注入风险。
 - 为了避免在配置中硬编码用户名，可以支持 `~`、`$HOME`、`${HOME}` 在 `command`、`args`、`workingDirectory` 单个 token 内展开为当前用户目录；该展开不是 shell，不处理任意环境变量、通配符、管道或重定向。
 - 破坏性命令应支持 `confirm=true` 和 `confirmMessage`，执行前弹确认。
+- 非后台命令应有明确运行反馈：默认在执行完成后提示成功/失败；失败时优先展示 stderr；需要观察长命令过程时，用 `showOutput=true` 打开运行中窗口并实时显示 stdout/stderr。
 - provider 应作为全局搜索普通搜索插件注册，保留插件启停、排序和 best match 行为。
 - 如果用户觉得手写 JSON 麻烦，推荐在 `search-ukcc-plugin` 的全局搜索设置页增加“自定义命令”入口，打开图形化配置对话框，直接读写同一个 `custom-commands.json`。
+- 设置页配置入口应在每次点击打开时重新读取 `custom-commands.json`。如果配置窗口已经打开，可以提供“刷新”按钮由用户显式重新加载；不要只依赖控制中心进程启动时的旧内存状态。
+- 删除、清空回收站等破坏性确认框应默认聚焦“取消”，避免回车误触发；按钮文案使用“取消/确认”，并用颜色区分安全操作和危险操作，例如取消为蓝色、确认为红色。若 `QMessageBox` 父级样式被 UKUI 主题覆盖，应直接给按钮本身设置样式和 palette，必要时改用自定义 `QDialog`。
 
 ## 用户级配置格式
 
@@ -42,6 +45,7 @@ $HOME/.config/org.ukui/ukui-search/custom-commands.json
       "confirm": true,
       "confirmMessage": "是否永久删除回收站中的所有项目？",
       "detached": false,
+      "showOutput": false,
       "showInBestMatch": true,
       "timeout": 30000
     }
@@ -60,6 +64,7 @@ $HOME/.config/org.ukui/ukui-search/custom-commands.json
 - `icon`：XDG 图标名。
 - `confirm` / `confirmMessage`：破坏性命令确认。
 - `detached`：是否后台启动。
+- `showOutput`：仅对非 detached 命令生效；为 `true` 时弹出运行中窗口，实时显示 stdout/stderr，命令结束后显示成功/失败/超时状态。
 - `workingDirectory`：可选工作目录。
 - `timeout`：非 detached 命令等待超时。
 - `showInBestMatch`：是否进入最佳匹配。
@@ -99,10 +104,37 @@ search-ukcc-plugin/translations/zh_CN.ts
 - 如需图形化配置，在 `search-ukcc-plugin/search.cpp` 中增加“自定义命令”设置项和配置对话框：
   - 左侧显示命令列表。
   - 右侧编辑 `id`、`name`、`description`、`keywords`、`command`、`args`、`icon`、`workingDirectory`、`timeout`、`confirm`、`confirmMessage`、`detached`、`showInBestMatch`。
+  - 需要观察命令输出时，增加 `showOutput` 开关；不要把所有非后台命令都强制弹大窗口，短命令默认用成功/失败提示即可。
   - `keywords` 和 `args` 可用“每行一个值”的文本框，比直接编辑 JSON 数组更适合普通用户。
   - 保存前验证 `id`、`name`、`command` 非空且 `id` 唯一。
   - 使用 `QSaveFile` 或等价方式原子写入，避免配置文件写一半导致全局搜索 provider 无法解析。
   - 图形入口仍然读写用户级配置，不需要提权，不应写入 `/usr` 或系统级配置。
+  - 配置对话框应支持单条命令保存，避免用户必须关闭整个窗口才能落盘。
+  - 图标选择避免扫描完整 `/usr/share/icons` 后同步渲染所有图标；优先提供少量常用主题图标下拉列表，并允许手工输入主题图标名或通过文件选择器从 `/usr/share/icons` 选择具体图标文件。
+  - 输入框、右侧详情区和确认框颜色应跟随 Qt palette，不要硬编码白底；只有危险/安全按钮这类语义色可以显式设置。
+  - 如果设置页和全局搜索前端是不同进程或插件，安装新插件后要关闭旧 `ukui-control-center` 进程再打开，否则可能仍加载旧 `.so` 或旧内存配置。
+
+## 执行反馈实现要点
+
+非 detached 命令建议分两条路径：
+
+- `showOutput=false`：同步等待命令完成；成功时弹成功提示；失败或超时时弹失败/超时提示，并优先展示 stderr，stderr 为空时可展示 stdout 摘要。
+- `showOutput=true`：打开运行中窗口，用 `QProcess::readyReadStandardOutput` 和 `readyReadStandardError` 实时追加输出；命令结束后更新状态为成功、失败或超时，再允许关闭窗口。
+
+运行中窗口注意事项：
+
+- `QProcess` 生命周期要覆盖整个窗口 `exec()` 期间，不要在命令未结束时让局部对象析构。
+- 命令未结束时不要允许用户直接关闭窗口；否则可能导致进程被销毁或输出丢失。可以禁用关闭按钮，必要时重写 `closeEvent`。
+- 超时后先 `kill()`，再 `waitForFinished()` 收集剩余输出。
+- 执行完成后全局搜索框应关闭或隐藏，避免仍停留在执行前状态。
+- 建议提供一个测试命令用于 GUI 验证长命令体验，例如每秒输出 stdout/stderr 并在数秒后成功退出；验证完成后可删除该测试命令。
+
+确认框注意事项：
+
+- 对需要确认的命令，确认框默认焦点应在“取消”，不是“确认”。
+- 回车应触发当前焦点按钮；Tab 或方向键切换焦点时，焦点态必须清晰可见。
+- 避免刚弹出确认框时用户前一次 Enter/Space 事件直接穿透确认。可以设置短暂输入保护，或默认聚焦取消并关闭默认确认按钮的 auto-default 行为。
+- 破坏性操作按钮使用红色只是视觉提示，不应改变默认焦点；默认仍应是取消。
 
 ## 构建与安装验证
 
@@ -195,9 +227,12 @@ jq . "$HOME/.config/org.ukui/ukui-search/custom-commands.json" >/dev/null
 如果实现了设置页图形化入口，继续验证：
 
 - 打开“设置 -> 全局搜索”，应能看到“自定义命令”入口。
-- 点击“配置”后能看到命令列表和编辑表单。
+- 点击“配置”后能看到命令列表和编辑表单；如果外部修改过 `custom-commands.json`，重新点击入口应加载最新配置，窗口内“刷新”按钮也应能重新读取磁盘配置。
 - 保存后 `custom-commands.json` 是格式化 JSON。
 - 使用 `$HOME/下载`、`~/Downloads` 这类参数时，全局搜索执行动作前应展开到当前用户目录。
+- 未勾选后台运行时，短命令成功后应出现成功提示；失败时应展示 stderr。
+- 勾选“显示输出”后，长命令应弹运行中窗口，实时显示 stdout/stderr，结束后显示成功/失败/超时状态。
+- 删除自定义命令时，确认框应显示“取消/确认”，默认焦点为取消，取消和确认应有清晰颜色区分。
 
 ## 回滚
 
