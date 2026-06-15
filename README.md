@@ -260,7 +260,7 @@ README 同时介绍 `references/` 和 `knowledge/`：前者是入口和索引，
 
 - 根分区、DATA 分区、`/home` 实际挂载位置、空间占用判断：[`references/storage-layout.md`](references/storage-layout.md)
 - 磐石架构、ostree、overlay、KARE 合并视图的判断方式：[`references/storage-layout.md`](references/storage-layout.md)
-- 根分区扩容或 DATA 分区调整前的诊断边界和风险判断：[`references/storage-layout.md`](references/storage-layout.md)
+- 根分区扩容、backup 分区缩小、DATA 分区调整前的诊断边界和风险判断：[`references/storage-layout.md`](references/storage-layout.md)
 
 ### AI 工具配置与经验复用
 

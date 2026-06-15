@@ -260,7 +260,7 @@ The skill currently covers the issue types below. `references/` is the category 
 
 - Root partition, DATA partition, actual `/home` mount location, and disk-usage interpretation: [`references/storage-layout.md`](references/storage-layout.md)
 - PanShi, ostree, overlay, and KARE merged-view interpretation: [`references/storage-layout.md`](references/storage-layout.md)
-- Diagnosis boundaries and risk checks before root expansion or DATA partition changes: [`references/storage-layout.md`](references/storage-layout.md)
+- Diagnosis boundaries and risk checks before root expansion, backup partition shrinking, or DATA partition changes: [`references/storage-layout.md`](references/storage-layout.md)
 
 ### AI Tool Configuration And Reuse
 
