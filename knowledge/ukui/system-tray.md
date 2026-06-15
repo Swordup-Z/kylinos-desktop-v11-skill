@@ -16,6 +16,8 @@
 - `orderedItems` 记录普通托盘图标顺序；`fixedItems` 记录固定在右侧的特殊项；`controlPanelItems` 记录音量、蓝牙、网络等控制区图标；`separateIndex` 记录显示区和折叠/隐藏区的分界。
 - 如果某个常驻托盘图标没有进入 `orderedItems`、`fixedItems` 或 `controlPanelItems`，它通常会按 StatusNotifier 注册顺序插入，重启应用或重启系统后位置容易变化。
 - `separateIndex` 应与希望显示在主托盘区域的 `orderedItems` 数量匹配；`orderedItems` 中位于该分界之后的项目进入折叠/隐藏区。
+- `separateIndex` 更接近“主托盘显示区容量”而不是“固定可见项集合”。如果分界前的某个应用退出，例如蓝信退出后 `orderedItems` 前段少了一个已注册项目，UKUI 面板可能会从分界后的已注册项目中补位到主托盘显示区，导致原本在折叠区的截图或剪切板显示出来。这是当前配置模型/面板逻辑的限制，不是配置没有保存。
+- 如果目标是“某些 ID 永远主显示，某些 ID 永远折叠；主显示项退出时不从折叠区补位”，单靠 `systemTray.json` 的 `orderedItems` + `separateIndex` 通常做不到，需要面板托盘逻辑支持显式可见列表/隐藏列表，或源码级修改。
 - 临时托盘项通常不要写入排序配置；但如果用户明确要求某个临时项持久进入隐藏区，例如截图工具，可以把该项 ID 写入 `orderedItems` 并放到 `separateIndex` 分界之后。
 - “隐藏到折叠区”和“抑制显示”不是一回事：要把图标收进隐藏/折叠区，应调整 `orderedItems` 和 `separateIndex`；不要把它写入 `trayIconsInhibited`。
 - `trayIconsInhibited` 会抑制图标显示，效果接近从托盘中不显示；除非用户明确要禁用显示，否则不要写入该列表。
