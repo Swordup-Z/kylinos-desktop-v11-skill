@@ -197,7 +197,7 @@ README 同时介绍 `references/` 和 `knowledge/`：前者是入口和索引，
 - 如果没有命中专门 reference，至少读取通用系统维护文档 [`references/system-maintenance.md`](references/system-maintenance.md)。
 - 如果本地 skill 已读取但没有覆盖当前系统问题，在自行探索修复前，可以先尽力同步本仓库的 GitHub 上游，查看是否已有新增经验；同步前必须确认工作树干净，只允许 `fetch` 和 `pull --ff-only`，不得强制覆盖本地改动。同步失败不阻塞问题处理，继续用当前资料、模型能力和通用经验诊断。
 - 如果问题需要重新编译系统源码包、替换系统共享库、评估 ABI/SONAME/依赖/RPATH 风险，或保存本地客制化源码、构建目录和回滚包索引，先读取源码重编译分类入口 [`references/source-rebuild.md`](references/source-rebuild.md)，再按它指向的 `knowledge/source-rebuild/` 章节继续处理；本地客制化项目必须在 `/data/usershare/kylinos-local-sources/<component-or-fix>/CUSTOMIZATION.md` 记录索引。
-- 本地源码客制化修改可以在本地工作树提交 git commit 作为变更边界，但默认不要 push；应把 commit 导出为 patch，保存在保存本地修改源码的项目根目录下的 `/data/usershare/kylinos-local-sources/<component-or-fix>/patches/`，与 `<source-tree>/`、`build/`、`rollback/` 同级，并在 `CUSTOMIZATION.md` 记录 commit、patch、基线版本、安装状态和回滚路径，方便后续系统包升级后重新套用或迁移个性化功能。
+- 本地源码客制化修改可以在本地工作树提交 git commit 作为变更边界，但默认不要 push；应把 commit 导出为 patch，保存在保存本地修改源码的项目根目录下的 `/data/usershare/kylinos-local-sources/<component-or-fix>/patches/<source-package>/`，与 `<source-tree>/`、`build/`、`rollback/` 同级，并按源码包名分层，方便后续系统包升级后查找、重新套用或迁移个性化功能；同时在 `CUSTOMIZATION.md` 记录 commit、patch、基线版本、安装状态和回滚路径。
 - 普通代码开发、文档编辑、Git 操作或其他无关任务不要加载该 skill。
 - 按“诊断 -> 修复 -> 验证 -> 沉淀经验”的闭环处理问题。
 - 系统问题默认以持久化修复为目标；临时止血后，还要确认重启、重新登录、服务重拉起或应用重启后是否仍然有效。

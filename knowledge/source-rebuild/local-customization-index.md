@@ -69,7 +69,8 @@ ukui-panel-tray-persistence
 │       ├── SHA256SUMS
 │       └── restore.sh
 ├── patches/
-│   └── <timestamp>-<short-topic>.patch
+│   └── <source-package>/
+│       └── <timestamp>-<source-package>-<short-topic>.patch
 └── notes/
 ```
 
@@ -79,16 +80,22 @@ ukui-panel-tray-persistence
 
 本地源码客制化可以使用 git commit 固化修改边界，便于以后系统包升级后继续合并个性化功能；但该 commit 默认只属于当前机器的本地工作树，不应 push 到上游社区、发行版仓库或公开远端，除非用户明确要求发布。
 
-`patches/` 是保存本地修改源码的项目根目录下的目录，应与 `<source-tree>/`、`build/`、`rollback/` 同级，不要放进源码树内部。例如源码树是：
+`patches/` 是保存本地修改源码的项目根目录下的目录，应与 `<source-tree>/`、`build/`、`rollback/` 同级，不要放进源码树内部。`patches/` 下再按源码包名分层，方便系统包版本更新后按源码包查找、重新套用和合并个性化功能。例如源码树是：
 
 ```text
 /data/usershare/kylinos-local-sources/<component-or-fix>/<source-tree>/
 ```
 
-则 patch 保存目录应是：
+源码包名是 `<source-package>` 时，patch 保存目录应是：
 
 ```text
-/data/usershare/kylinos-local-sources/<component-or-fix>/patches/
+/data/usershare/kylinos-local-sources/<component-or-fix>/patches/<source-package>/
+```
+
+源码包名优先从当前系统包元数据确认：
+
+```bash
+dpkg-query -W -f='${binary:Package} ${Version} ${Source}\n' <binary-package>
 ```
 
 推荐流程：
@@ -98,11 +105,11 @@ git status -sb
 git diff --stat
 git add <changed-files>
 git commit -m "<component>: <customization-summary>"
-mkdir -p "/data/usershare/kylinos-local-sources/<component-or-fix>/patches"
-git format-patch -1 HEAD --stdout > "/data/usershare/kylinos-local-sources/<component-or-fix>/patches/<timestamp>-<short-topic>.patch"
+mkdir -p "/data/usershare/kylinos-local-sources/<component-or-fix>/patches/<source-package>"
+git format-patch -1 HEAD --stdout > "/data/usershare/kylinos-local-sources/<component-or-fix>/patches/<source-package>/<timestamp>-<source-package>-<short-topic>.patch"
 ```
 
-提交信息只描述实际功能变更，不写 AI 相关署名、协作生成信息或无关聊天上下文。导出的 patch 应保存在当前客制化项目根目录下的 `patches/`，不要放在源码树内部、`$HOME`、下载目录或临时目录。
+提交信息只描述实际功能变更，不写 AI 相关署名、协作生成信息或无关聊天上下文。导出的 patch 应保存在当前客制化项目根目录下的 `patches/<source-package>/`，不要放在源码树内部、`$HOME`、下载目录或临时目录。
 
 生成 patch 后必须更新 `CUSTOMIZATION.md`：
 

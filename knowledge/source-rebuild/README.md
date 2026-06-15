@@ -115,11 +115,11 @@ mm-cli -c -a
 /data/usershare/kylinos-local-sources/<component-or-fix>/rollback/<timestamp>/restore.sh
 ```
 
-如果用户希望后续在新版系统包上继续保留本地个性化功能，源码修改完成后应导出 patch 并记录到工作区。patch 目录应位于保存本地修改源码的项目根目录下，与 `<source-tree>/`、`build/`、`rollback/` 同级，不要放进源码树内部：
+如果用户希望后续在新版系统包上继续保留本地个性化功能，源码修改完成后应导出 patch 并记录到工作区。patch 目录应位于保存本地修改源码的项目根目录下，与 `<source-tree>/`、`build/`、`rollback/` 同级，不要放进源码树内部；`patches/` 下再按源码包名分层，方便后续按源码包查找、重新套用和合并：
 
 ```bash
-mkdir -p "/data/usershare/kylinos-local-sources/<component-or-fix>/patches"
-git -C "/data/usershare/kylinos-local-sources/<component-or-fix>/<source-tree>" format-patch -1 HEAD --stdout > "/data/usershare/kylinos-local-sources/<component-or-fix>/patches/<timestamp>-<short-topic>.patch"
+mkdir -p "/data/usershare/kylinos-local-sources/<component-or-fix>/patches/<source-package>"
+git -C "/data/usershare/kylinos-local-sources/<component-or-fix>/<source-tree>" format-patch -1 HEAD --stdout > "/data/usershare/kylinos-local-sources/<component-or-fix>/patches/<source-package>/<timestamp>-<source-package>-<short-topic>.patch"
 ```
 
 该 commit 和 patch 只作为本地继续定制的依据；不要 push 到上游或公开远端。系统包升级后，应先判断新版本是否已经包含同类功能，再把 patch 套到新的源码节点上重新构建、重新做 ABI/RPATH/导出符号验证和回滚包准备。
