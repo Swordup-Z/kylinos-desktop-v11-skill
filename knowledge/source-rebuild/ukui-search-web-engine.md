@@ -238,3 +238,50 @@ git describe --tags --contains <commit>
 ```
 
 在一次环境中，该 ABI 指纹对应公开提交 `fix(libsearch):调用applicationInfo接口概率会导致产生core文件`，该提交位于 `build/4.21.1.0-ok0.3` 之后、`build/4.21.1.0-ok0.4` 之前。若用早于该提交的 `libukui-search.so` 替换当前系统库，当前系统前端会因为找不到 `UkuiSearch::LogUtils::messageOutput(...)` 而失败。因此，C++ API 差异可以用于排除过早源码并给出候选提交下界，但仍需要结合包 changelog、BUG 编号和其他二进制文件指纹来判断完整补丁集合。
+
+继续以公开 `openkylin/nile-sp2` 上包含 `#536849` 的 `fix(system-dbus): 增加dbus管控功能` 提交作为候选上界时，未修改源码可在本地完整编译。若保留后续 `fix(app-data): 修复 SQLite 锁竞争与数据库事务处理问题` 这类稳定性提交，构建出的 `libukui-search.so.2.3.0` 可能比当前系统库多导出 2 个 SQLite 辅助符号：
+
+```text
+UkuiSearch::configureSqliteDatabase(QSqlDatabase&, UkuiSearch::SqliteDatabaseMode, QString*)
+UkuiSearch::defaultSqliteBusyTimeoutMs()
+```
+
+这种“候选库是系统库导出符号的超集”不同于之前的缺符号风险；只要 `system_only` 为 0、`SONAME`/`NEEDED` 一致且无 `RPATH`/`RUNPATH`，可视为低于缺符号场景的 ABI 风险，但仍应先本地验证再安装：
+
+```bash
+nm -D --defined-only /usr/lib/<arch>/libukui-search.so.2.3.0 | awk '{print $3}' | sort > /tmp/ukui-search.system.rawsyms
+nm -D --defined-only <build>/libsearch/libukui-search.so.2.3.0 | awk '{print $3}' | sort > /tmp/ukui-search.patched.rawsyms
+comm -23 /tmp/ukui-search.system.rawsyms /tmp/ukui-search.patched.rawsyms
+comm -13 /tmp/ukui-search.system.rawsyms /tmp/ukui-search.patched.rawsyms | c++filt
+readelf -d <build>/libsearch/libukui-search.so.2.3.0 | rg 'NEEDED|SONAME|RUNPATH|RPATH|FLAGS'
+```
+
+在该候选基线上为 Bing/Google 做最小补丁后，应验证：
+
+```bash
+strings <build>/libsearch/libukui-search.so.2.3.0 | rg 'www\.bing\.com|www\.google\.com|bing|google'
+strings <build>/search-ukcc-plugin/libsearch-ukcc-plugin.so | rg 'Bing|Google|bing|google'
+LD_LIBRARY_PATH=<build>/libsearch timeout 5s /usr/bin/ukui-search --quit
+```
+
+若系统前端通过 `LD_LIBRARY_PATH` 加载本地新库执行 `--quit` 不再出现 `undefined symbol`，说明至少没有复现早期不匹配版本的 C++ 接口缺失问题。不要把本地构建过程中 `lupdate` 写回的 `.ts` 翻译文件噪声作为补丁内容；源码补丁应尽量只保留功能相关 C++ 变更。
+
+只有完成上述本地验证后，才进入替换系统文件试运行阶段。试运行前必须先准备回滚机制，不要直接覆盖 `/usr` 下文件：
+
+```text
+local-test-package/
+  staged/          # 将要安装到系统路径的新产物
+  system-backup/   # 试装前复制出的系统原文件
+  SHA256SUMS       # 新旧文件校验和
+  restore.sh       # 只恢复本次试装目标文件的回滚脚本
+```
+
+`restore.sh` 应只恢复本次替换的目标文件，例如：
+
+```bash
+install -m 0644 system-backup/libukui-search.so.2.3.0 /usr/lib/<arch>/libukui-search.so.2.3.0
+install -m 0644 system-backup/libsearch-ukcc-plugin.so /usr/lib/<arch>/ukui-control-center/libsearch-ukcc-plugin.so
+ldconfig
+```
+
+试装后立即执行最小验证；一旦出现 `undefined symbol`、前端启动失败、控制中心插件加载失败或服务异常，立即运行 `restore.sh` 并再次执行 `dpkg -V` 确认系统文件恢复。
