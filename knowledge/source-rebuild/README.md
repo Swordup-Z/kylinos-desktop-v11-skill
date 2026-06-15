@@ -85,6 +85,8 @@ mm-cli -c -a
 - `SHA256SUMS`：系统原文件、安装产物、原始构建产物的校验和。
 - `restore.sh`：只恢复本次改动目标文件的回滚脚本。
 
+`staged/` 中的共享库应尽量接近发行版安装形态。若直接构建产物包含调试符号，应先复制到 `staged/` 后执行 `strip --strip-unneeded`，保留未裁剪版本在 `original-build/` 中用于后续分析。重新生成 `staged/` 或修改 `restore.sh` 后，必须重新生成并验证 `SHA256SUMS`。
+
 试装后立即用最小命令验证动态链接是否正常，例如运行组件自身的 `--quit`、`--version`、插件加载命令或对应服务重启命令。若出现 `symbol lookup error`、`undefined symbol`、进程崩溃或服务无法启动，立即执行回滚脚本并再次验证系统包文件校验。
 
 ## 记录要求

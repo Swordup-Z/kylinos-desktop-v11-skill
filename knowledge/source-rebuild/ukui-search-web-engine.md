@@ -279,9 +279,10 @@ LD_LIBRARY_PATH=<build>/libsearch timeout 5s /usr/bin/ukui-search --quit
 
 ```text
 local-test-package/
-  staged/          # 将要安装到系统路径的新产物
+  staged/          # 将要安装到系统路径的 stripped 新产物
+  original-build/  # 未裁剪构建产物，用于后续分析
   system-backup/   # 试装前复制出的系统原文件
-  SHA256SUMS       # 新旧文件校验和
+  SHA256SUMS       # 新旧文件和回滚脚本校验和
   restore.sh       # 只恢复本次试装目标文件的回滚脚本
 ```
 
@@ -293,4 +294,22 @@ install -m 0644 system-backup/libsearch-ukcc-plugin.so /usr/lib/<arch>/ukui-cont
 ldconfig
 ```
 
-试装后立即执行最小验证；一旦出现 `undefined symbol`、前端启动失败、控制中心插件加载失败或服务异常，立即运行 `restore.sh` 并再次执行 `dpkg -V` 确认系统文件恢复。
+试装后立即执行最小验证：
+
+```bash
+sha256sum -c SHA256SUMS
+sha256sum /usr/lib/<arch>/libukui-search.so.2.3.0 staged/libukui-search.so.2.3.0
+sha256sum /usr/lib/<arch>/ukui-control-center/libsearch-ukcc-plugin.so staged/libsearch-ukcc-plugin.so
+dpkg -V libukui-search2 ukui-search ukui-control-center
+timeout 5s ukui-search --quit
+journalctl --user --since '5 minutes ago' --no-pager | rg -i 'ukui-search|control-center|undefined symbol|segfault|core dumped|crash'
+```
+
+`dpkg -V` 在试装期间会报告被替换文件的校验差异，这是预期现象；关键是确认差异只来自本次替换的目标文件。验证控制中心设置插件时，可打开对应设置页后确认进程实际加载了目标插件：
+
+```bash
+pid=$(pgrep -n -f 'ukui-control-center')
+rg 'libsearch-ukcc-plugin\.so' /proc/$pid/maps
+```
+
+一旦出现 `undefined symbol`、前端启动失败、控制中心插件加载失败或服务异常，立即运行 `restore.sh` 并再次执行 `dpkg -V` 确认系统文件恢复。
