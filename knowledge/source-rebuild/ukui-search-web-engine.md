@@ -70,11 +70,19 @@ git log --all --format='%h %ai %D%n%s%n' --grep='<bug-id>|<keyword>' --extended-
 
 ## 最小源码修改
 
-设置界面下拉框需要新增选项，示例：
+设置界面下拉框负责控制用户可见选项。新增或移除搜索引擎时，优先在这里调整 `insertItem` 列表。示例：
 
 ```cpp
-m_webEngineFrame->mCombox->insertItem(3, QIcon(), tr("Bing"), "bing");
-m_webEngineFrame->mCombox->insertItem(4, QIcon(), tr("Google"), "google");
+m_webEngineFrame->mCombox->insertItem(0, QIcon("/usr/share/ukui-search/search-ukcc-plugin/image/baidu.svg"), tr("baidu"), "baidu");
+m_webEngineFrame->mCombox->insertItem(1, QIcon("/usr/share/ukui-search/search-ukcc-plugin/image/bing.svg"), tr("Bing"), "bing");
+m_webEngineFrame->mCombox->insertItem(2, QIcon("/usr/share/ukui-search/search-ukcc-plugin/image/google.svg"), tr("Google"), "google");
+```
+
+如果只是希望设置界面不再显示某些旧选项，不要删除系统包自带图标资源，也不要先改后端 URL 映射；从下拉框移除对应 `insertItem` 即可。保留后端旧分支能避免已有 `gsettings` 值或手工配置突然失效。移除前应先检查当前值，如果当前值正是即将隐藏的旧选项，先迁移到仍可见的默认值：
+
+```bash
+gsettings get org.ukui.search.settings web-engine
+gsettings set org.ukui.search.settings web-engine baidu
 ```
 
 后端 URL 映射需要新增分支，示例：
@@ -87,7 +95,20 @@ m_webEngineFrame->mCombox->insertItem(4, QIcon(), tr("Google"), "google");
 }
 ```
 
-这只是最小功能补丁；正式补丁还应同步翻译、图标和打包元数据。
+这只是最小功能补丁；正式补丁还应同步翻译、图标和打包元数据。若只移除设置界面的可见选项，通常不需要修改后端 URL 映射。
+
+新增设置下拉框选项时，如果原有选项都使用 `QIcon("<installed-resource-path>")`，不要使用空 `QIcon()` 作为长期方案。应同步添加可安装的图标资源，并确认构建系统会把资源安装到代码引用的路径。例如 `search-ukcc-plugin/CMakeLists.txt` 若通过 `file(GLOB IMG_FILES ./image/*)` 安装图标，则可把新增 SVG 放入源码的 `search-ukcc-plugin/image/`，试装时同步复制到：
+
+```text
+/usr/share/ukui-search/search-ukcc-plugin/image/
+```
+
+验证时同时检查插件二进制包含目标图标路径、系统资源文件存在且可读：
+
+```bash
+strings /usr/lib/<arch>/ukui-control-center/libsearch-ukcc-plugin.so | rg 'bing\.svg|google\.svg|Bing|Google'
+ls -l /usr/share/ukui-search/search-ukcc-plugin/image/<engine>.svg
+```
 
 ## 构建注意事项
 
@@ -292,6 +313,12 @@ local-test-package/
 install -m 0644 system-backup/libukui-search.so.2.3.0 /usr/lib/<arch>/libukui-search.so.2.3.0
 install -m 0644 system-backup/libsearch-ukcc-plugin.so /usr/lib/<arch>/ukui-control-center/libsearch-ukcc-plugin.so
 ldconfig
+```
+
+如果试装新增了原系统中不存在的资源文件，例如新增搜索引擎图标，回滚脚本也应删除这些新增文件，避免回滚后留下孤立资源：
+
+```bash
+rm -f /usr/share/ukui-search/search-ukcc-plugin/image/<engine>.svg
 ```
 
 试装后立即执行最小验证：
