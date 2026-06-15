@@ -58,6 +58,16 @@ git ls-remote --tags https://gitee.com/openkylin/ukui-search.git | rg '<version-
 
 公开 tag 与本机二进制包版本存在发行版后缀差异时，例如公开 tag 是 `build/<version>-ok0.1`，而本机包是 `<version>-ok0.1k0.22`，不能直接认为 ABI 完全一致。
 
+不要只按公开 tag 名称判断源码是否存在。KylinOS 发行版包可能在公开 openKylin 基线版本上继续做发行版侧重打包，包版本后缀如 `k0.<n>` 可能不会出现在公开仓库 tag 或 `debian/changelog` 历史中。遇到这种情况，应先读取当前已安装包自带 changelog，再用其中的 BUG 编号、Change-Id、改动描述反查公开仓库提交：
+
+```bash
+zcat /usr/share/doc/<binary-package>/changelog.Debian.gz | sed -n '1,160p'
+git log --all --format='%h %ai %D%n%s%n' -G '<bug-id>|<change-description>'
+git log --all --format='%h %ai %D%n%s%n' --grep='<bug-id>|<keyword>' --extended-regexp
+```
+
+如果公开仓库中能找到对应修复提交，但公开分支的包版本已经推进到更高版本，应把它视为“候选补丁提交”或“回灌来源线索”，不能直接把该分支整体作为当前系统包的精确源码。精确源码仍应以发行版 `deb-src`、源码包归档或与当前二进制包版本完全对应的补丁集合为准。
+
 ## 最小源码修改
 
 设置界面下拉框需要新增选项，示例：
@@ -202,3 +212,29 @@ apt-mark showhold
 ```
 
 `dpkg -V` 应无输出，相关包不应继续处于 hold 状态。
+
+进一步核查公开 Gitee 仓库时，`ukui-search` 顶层 `CMakeLists.txt` 可能没有声明包版本；可见包版本主要来自 `debian/changelog`。在一次环境中，本机安装包版本为 `<version>-ok0.1k0.22`，本机包 changelog 显示该版本修复 `#536849` 的 `com.ukui.search.qt.systemdbus` 管控风险；公开 Gitee 仓库全历史中没有完全相同的 `ok0.1k0.22` 版本号，但可在 `openkylin/nile-sp2` 历史中找到同 BUG 的源码提交，提交内容新增 `ukuisearch-systemdbus/conf/com.ukui.search.qt.systemdbus.yaml` 并安装到 `/etc/kylin-config/basic/`。本机系统中也能通过以下命令确认该文件由当前二进制包安装：
+
+```bash
+dpkg -L ukui-search-systemdbus | rg 'com\.ukui\.search\.qt\.systemdbus\.yaml'
+dpkg -S /etc/kylin-config/basic/com.ukui.search.qt.systemdbus.yaml
+```
+
+这类结果说明：公开仓库可能包含发行版包中某些修复的源码提交，但不一定包含当前发行版完整包版本的 changelog 和精确补丁集合。后续如需基于公开仓库修复当前系统，应优先 cherry-pick 目标补丁并重新构建当前发行版源码包，而不是降级或整体切换到公开更高版本分支。
+
+ABI 反推时，可把缺失 C++ 导出符号作为源码版本指纹。例如系统 `ukui-search` 前端如果依赖：
+
+```text
+UkuiSearch::LogUtils::messageOutput(QtMsgType, QMessageLogContext const&, QString const&)
+```
+
+而公开候选源码构建出的 `libukui-search.so` 只提供全局命名空间的 `LogUtils::messageOutput(...)`，则说明候选源码早于 `LogUtils` 纳入 `UkuiSearch` 命名空间的提交。公开仓库中该变化可用以下方式反查：
+
+```bash
+nm -D --undefined-only /usr/bin/ukui-search | c++filt | rg 'LogUtils|messageOutput'
+nm -D --defined-only /usr/lib/<arch>/libukui-search.so.2.3.0 | c++filt | rg 'LogUtils|messageOutput'
+git log --all --format='%h %ai %D%n%s%n' -G 'namespace UkuiSearch|messageOutput|LogUtils' -- libsearch/log-utils.h libsearch/log-utils.cpp
+git describe --tags --contains <commit>
+```
+
+在一次环境中，该 ABI 指纹对应公开提交 `fix(libsearch):调用applicationInfo接口概率会导致产生core文件`，该提交位于 `build/4.21.1.0-ok0.3` 之后、`build/4.21.1.0-ok0.4` 之前。若用早于该提交的 `libukui-search.so` 替换当前系统库，当前系统前端会因为找不到 `UkuiSearch::LogUtils::messageOutput(...)` 而失败。因此，C++ API 差异可以用于排除过早源码并给出候选提交下界，但仍需要结合包 changelog、BUG 编号和其他二进制文件指纹来判断完整补丁集合。
