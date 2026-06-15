@@ -68,6 +68,64 @@ git log --all --format='%h %ai %D%n%s%n' --grep='<bug-id>|<keyword>' --extended-
 
 如果公开仓库中能找到对应修复提交，但公开分支的包版本已经推进到更高版本，应把它视为“候选补丁提交”或“回灌来源线索”，不能直接把该分支整体作为当前系统包的精确源码。精确源码仍应以发行版 `deb-src`、源码包归档或与当前二进制包版本完全对应的补丁集合为准。
 
+### 本场景源码入口
+
+如果发行版 `deb-src` 暂时不可用，可从 openKylin 公开仓库拉取候选源码：
+
+```bash
+git clone https://gitee.com/openkylin/ukui-search.git
+cd ukui-search
+git fetch --all --tags
+git branch -a | rg 'openkylin|nile|huanghe|yangtze|packaging'
+git tag -l | rg '<upstream-version>|<package-version>'
+```
+
+该仓库的公开 tag 或分支不一定直接等于 KylinOS Desktop V11 本机包后缀版本。实际收敛时，不要只查 tag；应把本机 changelog 中的 BUG 编号、Change-Id、修复描述和安装文件作为线索，查找对应源码提交：
+
+```bash
+zcat /usr/share/doc/ukui-search/changelog.Debian.gz | sed -n '1,160p'
+git log --all --format='%h %ai %D%n%s%n' --grep='<bug-id>|<keyword>' --extended-regexp
+git log --all --format='%h %ai %D%n%s%n' -G '<change-id>|<expected-file>|<function-name>'
+```
+
+### 本场景精确比对
+
+候选节点至少要通过以下精确比对：
+
+```bash
+dpkg-query -W -f='${binary:Package} ${Version} ${Source}\n' ukui-search libukui-search2 ukui-control-center
+dpkg -S /usr/bin/ukui-search /usr/lib/*/libukui-search.so.2.3.0 /usr/lib/*/ukui-control-center/libsearch-ukcc-plugin.so
+
+readelf -d <build>/libsearch/libukui-search.so.2.3.0 | rg 'NEEDED|SONAME|RUNPATH|RPATH'
+readelf -d /usr/lib/<arch>/libukui-search.so.2.3.0 | rg 'NEEDED|SONAME|RUNPATH|RPATH'
+
+nm -D --undefined-only /usr/bin/ukui-search | c++filt | rg 'UkuiSearch|LogUtils|messageOutput'
+nm -D --defined-only /usr/lib/<arch>/libukui-search.so.2.3.0 | c++filt | rg 'UkuiSearch|LogUtils|messageOutput'
+nm -D --defined-only <build>/libsearch/libukui-search.so.2.3.0 | c++filt | rg 'UkuiSearch|LogUtils|messageOutput'
+```
+
+如果系统前端依赖 `UkuiSearch::LogUtils::messageOutput(...)`，而候选库只提供全局命名空间 `LogUtils::messageOutput(...)`，说明候选节点过早，不能替换系统库。继续沿公开仓库中引入 `namespace UkuiSearch` 或相关 ABI 迁移的提交之后寻找候选节点。
+
+### 本场景已验证成果边界
+
+在可用候选节点上，本需求的最小成果由两部分组成：
+
+- 后端 `libsearch/websearch/web-search-plugin.cpp` 新增 Bing/Google URL 映射。
+- 设置插件 `search-ukcc-plugin/search.cpp` 调整下拉框选项，并在 `search-ukcc-plugin/image/` 增加可安装图标。
+
+如果用户只要求隐藏 360、搜狗等旧搜索引擎，不需要删除后端旧 URL 分支，也不要删除系统包自带旧图标资源；仅从设置插件下拉框中移除对应 `insertItem`。这样可以避免已有旧 `gsettings` 值、手工配置或未来回滚时产生额外破坏。
+
+最终验证重点：
+
+```bash
+strings /usr/lib/<arch>/libukui-search.so.2.3.0 | rg 'www\.bing\.com|www\.google\.com'
+strings /usr/lib/<arch>/ukui-control-center/libsearch-ukcc-plugin.so | rg 'Bing|Google|bing\.svg|google\.svg'
+strings /usr/lib/<arch>/ukui-control-center/libsearch-ukcc-plugin.so | rg 'sougou\.svg|360\.svg|sougou|360' || true
+gsettings get org.ukui.search.settings web-engine
+```
+
+预期：新增搜索引擎 URL 和图标路径存在；被隐藏的旧选项不再出现在设置插件中；当前 `web-engine` 值仍属于可见选项。
+
 ## 最小源码修改
 
 设置界面下拉框负责控制用户可见选项。新增或移除搜索引擎时，优先在这里调整 `insertItem` 列表。示例：

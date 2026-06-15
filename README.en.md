@@ -23,9 +23,9 @@ Requirements:
    - Codex: $HOME/.codex/AGENTS.md
    - Claude Code: $HOME/.claude/CLAUDE.md
    - opencode: $HOME/.config/opencode/AGENTS.md
-3. Add a global rule: when handling KylinOS Desktop V11, UKUI, KARE, Kaiming, Clash Verge, system services, autostart, TUN, maintenance mode, PanShi architecture, system protection, partitions, mounts, overlay, or AI subsystem issues, first read $HOME/kylinos-desktop-v11-skill/SKILL.md, then selectively read the relevant references/*.md files listed there; if no specific reference matches, read references/system-maintenance.md at minimum; if the current task is not a desktop-system issue, do not load this skill.
+3. Add a global rule: when handling KylinOS Desktop V11, UKUI, KARE, Kaiming, Clash Verge, system services, autostart, TUN, maintenance mode, PanShi architecture, system protection, partitions, mounts, overlay, or AI subsystem issues, first read $HOME/kylinos-desktop-v11-skill/SKILL.md, then selectively read the relevant references/*.md files listed there; if a reference points to a concrete knowledge/ chapter, read only that chapter as needed; if no specific reference matches, read references/system-maintenance.md at minimum; if the current task is not a desktop-system issue, do not load this skill.
 4. Before any system-level repair, run mm-cli -s to check maintenance mode. If not in maintenance mode, only perform diagnostics and do not modify /usr, /etc, /opt, system packages, services, device nodes, partitions, or KSaf policy.
-5. After a fix is confirmed, record reusable findings in this skill's SKILL.md or references/*.md; if the issue was not previously covered by this skill, add an appropriate reference file and link it from SKILL.md.
+5. After a fix is confirmed, record reusable findings in this skill's SKILL.md, the relevant references/*.md routing file, or a concrete knowledge/ chapter; if the issue was not previously covered by this skill, add an appropriate reference as the category entry and put the detailed experience under knowledge/.
 6. When running any git commit, do not include AI-related author, co-author, generator, or assistant attribution in the commit author, commit body, or commit trailers.
 7. For future system repairs, use a dedicated session name such as os-fix; if the current AI tool supports session resume commands, continue later with <tool> resume os-fix to restore the same troubleshooting context.
 8. After installation, verify by reading $HOME/kylinos-desktop-v11-skill/SKILL.md and tell me which skill entry point you will use first for future KylinOS Desktop V11 system issues.
@@ -51,13 +51,13 @@ $HOME/kylinos-desktop-v11-skill/SKILL.md
 Add the following instruction to your tool's user-level global prompt file:
 
 ```markdown
-When handling KylinOS Desktop V11, UKUI, KARE, Kaiming, Clash Verge, system services, autostart, TUN, maintenance mode, PanShi architecture, system protection, partitions, mounts, overlay, or AI subsystem issues, first read `$HOME/kylinos-desktop-v11-skill/SKILL.md`, then selectively read the relevant `references/*.md` files listed there. If no specific reference matches, read `references/system-maintenance.md` at minimum. If the current task is not a desktop-system issue, do not load this skill. Do not preload every reference file.
+When handling KylinOS Desktop V11, UKUI, KARE, Kaiming, Clash Verge, system services, autostart, TUN, maintenance mode, PanShi architecture, system protection, partitions, mounts, overlay, or AI subsystem issues, first read `$HOME/kylinos-desktop-v11-skill/SKILL.md`, then selectively read the relevant `references/*.md` files listed there. If a reference points to a concrete `knowledge/` chapter, read only that chapter as needed. If no specific reference matches, read `references/system-maintenance.md` at minimum. If the current task is not a desktop-system issue, do not load this skill. Do not preload every reference or knowledge file.
 
 Before any system-level repair, run `mm-cli -s` to check maintenance mode. Only modify `/usr`, `/etc`, `/opt`, system packages, services, device nodes, partitions, or KSaf policy after confirming maintain mode.
 
-After a fix is confirmed, record reusable diagnosis steps, repair steps, risks, or system traits in `$HOME/kylinos-desktop-v11-skill/SKILL.md` or the relevant `references/*.md` file.
+After a fix is confirmed, record reusable diagnosis steps, repair steps, risks, or system traits in `$HOME/kylinos-desktop-v11-skill/SKILL.md`, the relevant `references/*.md` routing file, or a concrete `knowledge/` chapter.
 
-If the resolved KylinOS Desktop V11 system issue was not previously covered by this skill, add an appropriate `references/*.md` file or extend an existing reference, then link it from `SKILL.md`.
+If the resolved KylinOS Desktop V11 system issue was not previously covered by this skill, add an appropriate `references/*.md` file as the category entry and put the detailed experience under `knowledge/`; then link it from `SKILL.md`.
 ```
 
 Common user-level global prompt files:
@@ -119,6 +119,7 @@ The AI tool should read `SKILL.md`, selectively load the relevant `references/*.
 When using this skill for system troubleshooting, the AI tool must follow these baseline rules:
 
 - For any KylinOS Desktop V11 desktop-system maintenance task, read [`SKILL.md`](SKILL.md) first, then selectively read the relevant `references/*.md` files listed there; do not preload every reference file.
+- `references/` is the category and routing layer; `knowledge/` contains concrete troubleshooting chapters. Continue into `knowledge/` only when the selected reference points there.
 - If no specific reference matches, read the general maintenance reference [`references/system-maintenance.md`](references/system-maintenance.md) at minimum.
 - If an issue requires rebuilding a system source package, replacing a system shared library, or assessing ABI/SONAME/dependency/RPATH risk, read the specific scenario reference first, then [`knowledge/source-rebuild/README.md`](knowledge/source-rebuild/README.md).
 - Do not load this skill for ordinary coding, documentation, Git operations, or unrelated tasks.
@@ -127,14 +128,14 @@ When using this skill for system troubleshooting, the AI tool must follow these 
 - Before system-level repairs, run `mm-cli -s` to check maintenance mode; outside maintenance mode, only perform non-destructive diagnostics such as reading state or simulating installs/removals.
 - If the system is not in maintenance mode, enter maintenance mode and ask the user to reboot; after the fix is complete, exit maintenance mode and ask the user to reboot again to return to normal mode.
 - Do not delete, move, or overwrite existing executables, configs, subscription files, proxy cores, systemd units, or user data unless the user explicitly asks and the impact has been verified.
-- After a fix is confirmed, record reusable diagnosis steps, repair steps, risks, or system traits in `SKILL.md` or the relevant `references/*.md` file.
-- If the resolved KylinOS Desktop V11 system issue was not previously covered by this skill, add an appropriate `references/*.md` file or extend an existing reference, then link it from `SKILL.md`.
+- After a fix is confirmed, record reusable diagnosis steps, repair steps, risks, or system traits in `SKILL.md`, the relevant `references/*.md` routing file, or a concrete `knowledge/` chapter.
+- If the resolved KylinOS Desktop V11 system issue was not previously covered by this skill, add an appropriate `references/*.md` file as the category entry and put the detailed experience under `knowledge/`; then link it from `SKILL.md`.
 - Before running `git commit` in this repository, check whether `README.md` and `README.en.md` need to be updated. If the change affects installation, core requirements, supported issue coverage, reference entry points, safety boundaries, global prompts, or the public usage workflow, update the READMEs in the same commit.
 - When running any `git commit`, do not include AI-related author, co-author, generator, or assistant attribution in the commit author, commit body, or commit trailers.
 
 ## Supported Issues
 
-The skill currently covers the issue types below. Each item links to its reference file; AI tools should load only the relevant references instead of preloading the whole repository.
+The skill currently covers the issue types below. `references/` is the category entry layer, while `knowledge/` contains concrete chapters; AI tools should load only the relevant files instead of preloading the whole repository.
 
 ### System Maintenance And Safety Boundaries
 
