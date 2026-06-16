@@ -86,6 +86,24 @@ rg -n '<app-name>|<desktop-id>' /usr/share/applications "$HOME/.local/share/appl
 
 如果桌面入口包含 `Exec=/usr/bin/kare run ...`，或路径位于 `/opt/kare`、`/opt/kare-applications`，说明它仍然是 KARE 应用。终端、开发工具、代理工具等需要访问宿主系统状态的应用，应优先使用原生宿主机安装。
 
+对会自更新的第三方客户端，安装后还要确认实际系统包版本是否已经被客户端更新：
+
+```bash
+dpkg-query -W -f='${binary:Package} ${Version} ${Status}\n' <package-name>
+systemctl status <service-name> --no-pager || true
+ps -ef | rg -i '<app-keyword>|<vendor-keyword>' | rg -v rg || true
+```
+
+如果客户端把新版安装包下载到 `/var/tmp`、`/tmp` 或应用自己的缓存目录，且用户希望保留安装包，可把最新版本复制到 `$HOME/下载`，文件名带上版本号，避免覆盖旧包：
+
+```bash
+find /var/tmp /tmp "$HOME" -xdev -type f \( -iname '*<app>*installer*.deb' -o -iname '*<app>*.deb' \) -printf '%T@ %s %p\n' 2>/dev/null | sort -nr | head
+dpkg-deb -f /path/to/latest.deb Package Version Architecture
+cp -f /path/to/latest.deb "$HOME/下载/<app>_<version>_<arch>.deb"
+```
+
+不要把应用自更新后的版本误判为“安装失败后仍是旧版本”；以 `dpkg-query` 和正在运行的服务路径为准。
+
 完成系统级安装后，按维护模式流程执行：
 
 ```bash

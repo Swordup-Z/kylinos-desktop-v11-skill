@@ -54,6 +54,15 @@ readlink /proc/$$/ns/uts
 tr '\0' ' ' < /proc/<pid>/cmdline
 ```
 
+KARE 适合普通桌面应用的兼容运行，不适合作为所有应用的默认安装目标。以下类型应优先使用宿主机原生安装：
+
+- 需要安装 systemd 服务、内核模块、DKMS、udev 规则、驱动或网络扩展的应用。
+- 代理、VPN、TUN、证书、流量接管、安全客户端等强依赖宿主网络栈的应用。
+- 终端、开发工具、系统管理工具等需要准确看到宿主机 hostname、namespace、进程、文件系统和服务状态的应用。
+- 需要稳定托盘、输入法、全局快捷键、开机自启动或与 UKUI 设置深度集成的应用。
+
+判断原则：如果应用的核心功能依赖 `/usr`、`/etc`、`/opt`、systemd、D-Bus 系统服务、设备节点、网络命名空间或宿主桌面会话状态，不要优先放进 KARE；先做宿主机原生安装和验证。
+
 KARE 应用可能通过类似下面的桌面入口启动：
 
 ```desktop
@@ -123,6 +132,31 @@ rm "$HOME/.local/share/applications/<desktop-id>.desktop"
 update-desktop-database "$HOME/.local/share/applications"
 rg -n '<app-name>|<desktop-id>' "$HOME/.local/share/applications" /usr/share/applications 2>/dev/null
 ```
+
+如果用户认为应用又被安装到了 KARE，不要直接卸载。先建立证据链：
+
+```bash
+dpkg-query -W -f='${binary:Package} ${Version} ${Status}\n' <package-name> 2>/dev/null || true
+kare -l 2>&1 | rg -i '<app-name>|<package-name>|<vendor-keyword>' || true
+kaiming list 2>&1 | rg -i '<app-name>|<package-name>|<vendor-keyword>' || true
+rg -n -i '<app-name>|<package-name>|<vendor-keyword>|kare' /usr/share/applications "$HOME/.local/share/applications" /opt/kare/usr/share/applications /opt/kare-applications 2>/dev/null || true
+find /opt/kare /opt/kare-applications -xdev -type f \( -iname '*<app-name>*' -o -iname '*<vendor-keyword>*' \) 2>/dev/null | head
+```
+
+再对运行进程比对宿主会话 namespace：
+
+```bash
+ukui_pid=$(pgrep -n -x ukui-session || true)
+for pid in $ukui_pid $(pgrep -f '<app-name>|<vendor-keyword>' | sort -u); do
+  [ -e /proc/$pid ] || continue
+  ps -p "$pid" -o pid,user,comm,args --no-headers
+  readlink /proc/$pid/ns/mnt
+  readlink /proc/$pid/ns/uts
+  readlink /proc/$pid/root
+done
+```
+
+如果应用进程路径位于宿主机路径，包状态来自宿主 dpkg，桌面入口不含 `kare run`，且进程的 mount/UTS namespace 与 `ukui-session` 一致，说明当前运行的是宿主机版本。此时不要执行 KARE 清理；只需要移除失效的 KARE 桌面入口或旧缓存。
 
 验证时需要完全退出旧的 KARE 版应用实例，再从应用菜单重新启动；否则 Electron 单实例锁可能复用旧 KARE namespace。新进程应与宿主机处于同一个 UTS namespace，应用内 `hostname` 应显示宿主机 hostname。
 
