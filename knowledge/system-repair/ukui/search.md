@@ -11,7 +11,7 @@
 - 设置界面的“默认互联网搜索引擎”只提供少数固定选项，用户希望添加 Bing、Google 等搜索引擎。
 - 希望在全局搜索中出现可点击的系统动作或自定义命令，例如清空回收站。
 
-快捷键冲突、`Alt+Space` 等问题应读取 [`../../../references/system-repair/ukui.md`](../../../references/system-repair/ukui.md)。
+快捷键冲突、`Alt+Space` 等问题不在本章节处理，应改读 `knowledge/system-repair/ukui/keybindings.md`。
 
 ## 先诊断
 
@@ -56,7 +56,7 @@ libsearch/websearch/web-search-plugin.cpp
 
 要真正新增 Bing/Google，不应只改 gsettings，也不应只补图标；需要同时修改设置插件下拉框和后端 URL 映射，然后以与当前系统包匹配的版本重新构建、安装。没有当前系统包的精确源码和构建依赖时，不通过二进制字符串 patch 或替换共享库处理，因为这会影响 UKUI 全局搜索和控制中心稳定性。
 
-如果需要进入源码级修改，继续读取源码重编译入口：[`../../../references/feature-enhancement/source-rebuild.md`](../../../references/feature-enhancement/source-rebuild.md)。该入口会路由到源码匹配、最小补丁位置、构建依赖、ABI/RPATH 验证和“不应安装”判定知识。
+如果需要进入源码级修改，进入 `knowledge/feature-enhancement/source-rebuild/README.md`，只读取与当前源码修改匹配的细分章节。
 
 判断源码是否与当前系统包精确匹配时，先看本机二进制包版本：
 
@@ -216,7 +216,7 @@ busctl --user call org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DB
 
 ## 源码级正式开关
 
-如果用户明确要求在设置界面提供正式开关，而不是用户级 D-Bus workaround，应进入源码重编译流程：先读取 [`../../../references/feature-enhancement/source-rebuild.md`](../../../references/feature-enhancement/source-rebuild.md)，并把源码、构建目录、回滚包和 `CUSTOMIZATION.md` 放到 `/data/usershare/kylinos-local-sources/<component-or-fix>/`。
+如果用户明确要求在设置界面提供正式开关，而不是用户级 D-Bus workaround，应进入源码重编译流程，并把源码、构建目录、回滚包和 `CUSTOMIZATION.md` 放到 `/data/usershare/kylinos-local-sources/<component-or-fix>/`。
 
 最小实现通常涉及 `ukui-search` 本体，不需要修改软件商店本体：
 

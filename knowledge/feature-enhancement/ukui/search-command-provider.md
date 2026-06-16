@@ -4,7 +4,7 @@
 
 用户希望在 UKUI 全局搜索中执行可配置的系统动作或自定义命令，例如“清空回收站”。原生设置界面通常没有“添加自定义命令”的入口；全局搜索内部虽然支持插件和结果动作，但需要通过 `libukui-search` 的搜索插件体系扩展。
 
-如果只是屏蔽软件商店结果或调整已有设置，先读 [`../../system-repair/ukui/search.md`](../../system-repair/ukui/search.md)。如果要新增通用 provider、替换系统库或重新构建 `ukui-search`，必须先读 [`../../../references/feature-enhancement/source-rebuild.md`](../../../references/feature-enhancement/source-rebuild.md)。
+如果只是屏蔽软件商店结果或调整已有设置，改读 [`../../system-repair/ukui/search.md`](../../system-repair/ukui/search.md)。如果要新增通用 provider、替换系统库或重新构建 `ukui-search`，同时按 `knowledge/feature-enhancement/source-rebuild/README.md` 执行源码重编译通用流程。
 
 ## 设计原则
 

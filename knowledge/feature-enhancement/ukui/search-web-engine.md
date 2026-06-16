@@ -4,7 +4,7 @@
 
 KylinOS Desktop V11 的 UKUI 全局搜索设置里，“默认互联网搜索引擎”只提供固定选项，用户希望新增 Bing、Google 等搜索引擎。该需求通常不能只靠 `gsettings` 完成，因为设置界面下拉框和后端 URL 映射都可能写死在二进制组件中。
 
-先读取场景入口：[`../../../references/system-repair/ukui.md`](../../../references/system-repair/ukui.md)；如果是通用源码重编译问题，先读 [`../../../references/feature-enhancement/source-rebuild.md`](../../../references/feature-enhancement/source-rebuild.md)。
+如果问题是全局搜索异常或软件商店结果异常，而不是新增搜索引擎，改读 `knowledge/system-repair/ukui/search.md`。如果问题是通用源码重编译策略，而不是本搜索引擎场景，改读 `knowledge/feature-enhancement/source-rebuild/README.md`。
 
 ## 关键文件
 

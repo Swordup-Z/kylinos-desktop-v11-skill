@@ -16,6 +16,8 @@
 - UKUI 全局搜索自定义命令 provider 源码级扩展：读取 [`../ukui/search-command-provider.md`](../ukui/search-command-provider.md)。
 - UKUI 系统托盘隐藏区稳定性源码级修改：读取 [`../../system-repair/ukui/system-tray-source.md`](../../system-repair/ukui/system-tray-source.md)。
 
+只读取与当前源码修改匹配的一项子分类。需要本地源码目录、patch、回滚和索引策略时才读取 `local-customization-index.md`。
+
 后续新增源码重编译问题时，按组件或场景新增文件，例如：
 
 ```text
@@ -84,7 +86,7 @@ mm-cli -c -a
 
 ## 本地客制化源码工作区与索引
 
-进行本地源码修改、构建和试装时，先读取 [local-customization-index.md](local-customization-index.md)。除必须由系统包管理器安装到默认系统路径的依赖组件外，源码、构建目录、staging、回滚包、符号对比文件和其他中间产物都应优先放到 DATA 分区的共享工作区，避免占用根分区：
+进行本地源码修改、构建和试装时，先按 `local-customization-index.md` 的索引规则处理。除必须由系统包管理器安装到默认系统路径的依赖组件外，源码、构建目录、staging、回滚包、符号对比文件和其他中间产物都应优先放到 DATA 分区的共享工作区，避免占用根分区：
 
 ```text
 /data/usershare/kylinos-local-sources/<component-or-fix>/
@@ -205,7 +207,7 @@ strings <candidate-output> | rg '<expected-feature>|<known-system-string>'
 - 头文件或库缺失：优先安装最小 `-dev` 包，不要一次性安装完整桌面元包。
 - 构建目录缓存污染：删除构建目录后用相同源码重新配置，不要修改源码绕过依赖检查。
 - `RPATH`/`RUNPATH` 指向构建目录：重新配置 `CMAKE_SKIP_RPATH=ON`，不要安装带用户目录路径的产物。
-- 未跟踪中间产物反复污染 `git status`：按 [local-customization-index.md](local-customization-index.md) 的中间产物忽略策略补充 `.gitignore`，不要每次手工清理。
+- 未跟踪中间产物反复污染 `git status`：按 `local-customization-index.md` 的中间产物忽略策略补充 `.gitignore`，不要每次手工清理。
 - 翻译工具 `lupdate` 改写 `.ts`：如果 `.ts` 已被 git 跟踪，`.gitignore` 无法屏蔽；优先调整构建目标或参数避免改写源码树，暂时无法避免时构建后恢复无关翻译源噪声，只保留功能相关源码和资源变更。
 - 链接成功但运行失败：保留日志和符号差异，回到候选节点收敛，不要直接扩大替换范围。
 

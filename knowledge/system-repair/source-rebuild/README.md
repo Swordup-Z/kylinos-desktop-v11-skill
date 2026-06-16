@@ -1,6 +1,6 @@
 # 系统问题修复：源码重编译
 
-当系统问题无法通过配置、服务或包状态修复，必须修改系统组件源码时，先读取通用源码重编译流程：
+当系统问题无法通过配置、服务或包状态修复，必须修改系统组件源码时，先读取通用源码重编译流程。读取本文件后，只继续读取与用户问题匹配的一个具体章节。
 
 - [`../../feature-enhancement/source-rebuild/README.md`](../../feature-enhancement/source-rebuild/README.md)
 - [`../../feature-enhancement/source-rebuild/local-customization-index.md`](../../feature-enhancement/source-rebuild/local-customization-index.md)

@@ -111,7 +111,16 @@ kylinos-desktop-v11-skill/
 └── README.en.md
 ```
 
-`references/` is the short routing layer. `knowledge/` contains concrete chapters with background, diagnosis, repair or enhancement steps, verification, rollback, and cleanup notes.
+`references/` is the scenario routing layer. Each reference contains scope, a short explanation, a knowledge entry, and minimal diagnostics. `knowledge/<type>/<scenario>/README.md` is the scenario index that routes to one concrete chapter. The concrete `<topic>.md` files contain background, diagnosis, repair or enhancement steps, verification, rollback, and cleanup notes.
+
+Fixed loading path:
+
+```text
+task type
+-> scenario reference
+-> scenario knowledge README
+-> concrete knowledge chapter
+```
 
 ## Routing Examples
 
@@ -120,6 +129,7 @@ Clash Verge TUN failure:
 ```text
 SKILL.md
 -> references/system-repair/network.md
+-> knowledge/system-repair/network/README.md
 -> knowledge/system-repair/network/proxy-tun.md
 ```
 
@@ -128,6 +138,7 @@ UKUI global search showing uninstalled Software Center apps:
 ```text
 SKILL.md
 -> references/system-repair/ukui.md
+-> knowledge/system-repair/ukui/README.md
 -> knowledge/system-repair/ukui/search.md
 ```
 
@@ -136,7 +147,7 @@ Adding a custom command panel to UKUI global search:
 ```text
 SKILL.md
 -> references/feature-enhancement/ukui.md
--> references/feature-enhancement/source-rebuild.md
+-> knowledge/feature-enhancement/ukui/README.md
 -> knowledge/feature-enhancement/ukui/search-command-provider.md
 ```
 
@@ -145,6 +156,7 @@ Configuring Codex, Claude Code, or opencode to load this knowledge base:
 ```text
 SKILL.md
 -> references/feature-enhancement/agent-tools.md
+-> knowledge/feature-enhancement/agent-tools/README.md
 -> knowledge/feature-enhancement/agent-tools/global-prompts.md
 ```
 

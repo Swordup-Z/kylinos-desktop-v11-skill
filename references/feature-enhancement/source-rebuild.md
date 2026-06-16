@@ -6,12 +6,11 @@
 - 需要保存本地源码 commit、patch、构建清理策略和后续升级迁移路径。
 - 例如 UKUI 全局搜索添加搜索引擎、自定义命令 provider 或设置页配置入口。
 
-## 按子场景读取
+## 知识入口
 
-- 源码重编译通用流程：[`../../knowledge/feature-enhancement/source-rebuild/README.md`](../../knowledge/feature-enhancement/source-rebuild/README.md)
-- 本地源码客制化索引、commit、patch、构建清理：[`../../knowledge/feature-enhancement/source-rebuild/local-customization-index.md`](../../knowledge/feature-enhancement/source-rebuild/local-customization-index.md)
-- UKUI 全局搜索搜索引擎增强：[`../../knowledge/feature-enhancement/ukui/search-web-engine.md`](../../knowledge/feature-enhancement/ukui/search-web-engine.md)
-- UKUI 全局搜索自定义命令增强：[`../../knowledge/feature-enhancement/ukui/search-command-provider.md`](../../knowledge/feature-enhancement/ukui/search-command-provider.md)
+进入源码重编译索引后，按“通用源码流程”“本地客制化索引”“组件级增强实现”选择具体知识；不要同时读取所有源码增强章节。
+
+- [`../../knowledge/feature-enhancement/source-rebuild/README.md`](../../knowledge/feature-enhancement/source-rebuild/README.md)
 
 ## 最小诊断
 

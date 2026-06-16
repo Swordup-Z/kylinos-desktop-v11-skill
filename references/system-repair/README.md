@@ -1,6 +1,6 @@
 # 系统问题修复 References
 
-本目录用于路由“系统已有行为异常、失效、报错、不能持久化”的问题。先按场景读取最小 reference，再进入对应 `knowledge/system-repair/<scenario>/` 章节。
+本目录用于路由“系统已有行为异常、失效、报错、不能持久化”的问题。先按场景读取最小 reference，再进入对应 `knowledge/system-repair/<scenario>/README.md` 场景索引。
 
 ## 场景入口
 

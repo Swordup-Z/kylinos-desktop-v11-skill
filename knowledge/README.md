@@ -27,10 +27,13 @@ source-rebuild/
 ```text
 SKILL.md
 -> references/<system-repair|feature-enhancement>/<scenario>.md
+-> knowledge/<system-repair|feature-enhancement>/<scenario>/README.md
 -> knowledge/<system-repair|feature-enhancement>/<scenario>/<topic>.md
 ```
 
-`references/` 只做路由和最小诊断，`knowledge/` 才记录具体处理过程。新增经验时先判断任务类型和场景，再放入对应目录；如果没有合适章节，新建一个最小主题文件，并从同场景 reference 链接过去。
+`references/` 只做任务类型和实际场景路由；场景 `README.md` 只做特定分类和具体实例索引；具体 `<topic>.md` 才记录处理过程。新增经验时先判断任务类型和场景，再放入对应目录；如果没有合适章节，新建一个最小主题文件，并从同场景 README 链接过去。
+
+每次只读取最小必要链路。不要因为同一场景下存在多个主题文件，就把整个场景目录全部读入上下文。
 
 ## 章节要求
 

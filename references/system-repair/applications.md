@@ -6,10 +6,11 @@
 - AppImage 缺少 FUSE 或桌面入口异常。
 - KARE/Kaiming 宿主机路径、hostname、开始菜单入口、误装到隔离环境。
 
-## 先读知识章节
+## 知识入口
 
-- [`../../knowledge/system-repair/applications/installation.md`](../../knowledge/system-repair/applications/installation.md)
-- [`../../knowledge/system-repair/applications/isolation.md`](../../knowledge/system-repair/applications/isolation.md)
+进入应用与隔离索引后，按实际问题选择“安装/卸载/AppImage/第三方源”或“KARE/Kaiming 隔离/桌面入口”知识。
+
+- [`../../knowledge/system-repair/applications/README.md`](../../knowledge/system-repair/applications/README.md)
 
 ## 最小诊断
 

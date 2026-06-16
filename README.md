@@ -111,7 +111,16 @@ kylinos-desktop-v11-skill/
 └── README.en.md
 ```
 
-`references/` 是场景入口和路由层，内容短，适合先读。`knowledge/` 是具体知识章节，包含背景、诊断、修复、验证、回滚和清理规则。
+`references/` 是场景入口和策略路由层，包含适用场景、简短说明、知识入口和最小诊断。`knowledge/<type>/<scenario>/README.md` 是场景内索引，负责把问题继续路由到具体章节。具体 `<topic>.md` 才保存背景、诊断、修复或增强步骤、验证、回滚和清理规则。
+
+固定加载链路：
+
+```text
+需求类型
+-> 实际场景 reference
+-> 场景 knowledge README
+-> 具体细分 knowledge
+```
 
 ## 路由示例
 
@@ -120,6 +129,7 @@ Clash Verge TUN 模式失败：
 ```text
 SKILL.md
 -> references/system-repair/network.md
+-> knowledge/system-repair/network/README.md
 -> knowledge/system-repair/network/proxy-tun.md
 ```
 
@@ -128,6 +138,7 @@ UKUI 全局搜索显示软件商店未安装应用：
 ```text
 SKILL.md
 -> references/system-repair/ukui.md
+-> knowledge/system-repair/ukui/README.md
 -> knowledge/system-repair/ukui/search.md
 ```
 
@@ -136,7 +147,7 @@ SKILL.md
 ```text
 SKILL.md
 -> references/feature-enhancement/ukui.md
--> references/feature-enhancement/source-rebuild.md
+-> knowledge/feature-enhancement/ukui/README.md
 -> knowledge/feature-enhancement/ukui/search-command-provider.md
 ```
 
@@ -145,6 +156,7 @@ SKILL.md
 ```text
 SKILL.md
 -> references/feature-enhancement/agent-tools.md
+-> knowledge/feature-enhancement/agent-tools/README.md
 -> knowledge/feature-enhancement/agent-tools/global-prompts.md
 ```
 

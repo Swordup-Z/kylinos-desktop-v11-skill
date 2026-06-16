@@ -5,10 +5,11 @@
 - 指纹/生物识别设备断开、驱动缺失、认证服务异常。
 - GPU、显示频率、devfreq、休眠唤醒或硬件强相关稳定性问题。
 
-## 先读知识章节
+## 知识入口
 
-- [`../../knowledge/system-repair/hardware/biometric-fingerprint.md`](../../knowledge/system-repair/hardware/biometric-fingerprint.md)
-- [`../../knowledge/system-repair/hardware/graphics-frequency.md`](../../knowledge/system-repair/hardware/graphics-frequency.md)
+进入硬件与驱动索引后，按设备类型选择“指纹/生物识别”或“图形/devfreq/硬件稳定性”知识。
+
+- [`../../knowledge/system-repair/hardware/README.md`](../../knowledge/system-repair/hardware/README.md)
 
 ## 最小诊断
 

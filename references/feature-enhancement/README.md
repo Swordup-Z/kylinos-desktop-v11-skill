@@ -1,6 +1,6 @@
 # 系统功能增强 References
 
-本目录用于路由“系统原本能工作，但用户希望增加能力、改变默认行为、做本地客制化”的任务。先按场景读取最小 reference，再进入对应 `knowledge/feature-enhancement/<scenario>/` 章节。
+本目录用于路由“系统原本能工作，但用户希望增加能力、改变默认行为、做本地客制化”的任务。先按场景读取最小 reference，再进入对应 `knowledge/feature-enhancement/<scenario>/README.md` 场景索引。
 
 ## 场景入口
 

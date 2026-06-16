@@ -59,7 +59,7 @@ sudo mm-cli -o
 
 进入维护模式后需要重启系统，重启后重新打开 AI 工具再继续修复。在进入维护模式并重启前，只允许诊断、读取状态、查看日志、模拟安装/卸载等非破坏操作。
 
-应用安装、AppImage、KARE 环境误装、第三方 apt 源和公钥问题属于安装/包管理知识，应读取 [`../../../references/system-repair/applications.md`](../../../references/system-repair/applications.md)，不要把具体安装步骤继续追加到本文档。
+应用安装、AppImage、KARE 环境误装、第三方 apt 源和公钥问题属于安装/包管理知识，应改读 `knowledge/system-repair/applications/README.md`，不要把具体安装步骤继续追加到本文档。
 
 ## 退出维护模式
 
@@ -140,13 +140,13 @@ apt-cache policy <package>
 
 如果只能做临时止血，应明确告诉用户剩余的持久化风险和下一步验证方式。
 
-## 场景化参考文档
+## 场景化分流
 
-本文档只保留系统级修复的底座规则。具体场景应继续按需读取对应 reference：
+本文档只保留系统级修复的底座规则。具体场景应继续按需读取对应场景索引：
 
-- 应用安装、AppImage、KARE 环境误装、第三方 apt 源和公钥问题：读取 [`../../../references/system-repair/applications.md`](../../../references/system-repair/applications.md)。
-- 应用隔离与宿主机边界、KARE/Kaiming namespace、应用内 hostname 显示 `kare`、从隔离环境误启动 UKUI 面板、开始菜单固定项仍指向隔离环境：读取 [`../../../references/system-repair/applications.md`](../../../references/system-repair/applications.md)。
-- 全盘体检后的系统噪声清理、`motd-news.service`、PAM 残留引用、rsyslog 旧式配置：读取 [`../../../references/system-repair/system.md`](../../../references/system-repair/system.md)。
+- 应用安装、AppImage、KARE 环境误装、第三方 apt 源和公钥问题：读取 `knowledge/system-repair/applications/README.md`。
+- 应用隔离与宿主机边界、KARE/Kaiming namespace、应用内 hostname 显示 `kare`、从隔离环境误启动 UKUI 面板、开始菜单固定项仍指向隔离环境：读取 `knowledge/system-repair/applications/README.md`。
+- 全盘体检后的系统噪声清理、`motd-news.service`、PAM 残留引用、rsyslog 旧式配置：读取 `knowledge/system-repair/system/health-noise.md`。
 
 ## 未覆盖问题的经验沉淀
 

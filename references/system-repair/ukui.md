@@ -7,15 +7,11 @@
 - 右侧托盘隐藏/显示状态不持久、任务栏/面板异常。
 - 桌面 AI 组件残留、AI 子系统卸载。
 
-## 按子场景读取
+## 知识入口
 
-- 开机自启动不生效或设置界面不显示：[`../../knowledge/system-repair/ukui/autostart.md`](../../knowledge/system-repair/ukui/autostart.md)
-- 快捷键冲突、全局搜索快捷键无法唤起：[`../../knowledge/system-repair/ukui/keybindings.md`](../../knowledge/system-repair/ukui/keybindings.md)
-- 全局搜索结果来源异常、软件商店结果异常：[`../../knowledge/system-repair/ukui/search.md`](../../knowledge/system-repair/ukui/search.md)
-- 右侧托盘隐藏/显示状态不持久、顺序异常：[`../../knowledge/system-repair/ukui/system-tray.md`](../../knowledge/system-repair/ukui/system-tray.md)
-- 托盘问题必须源码级修复：[`../../knowledge/system-repair/ukui/system-tray-source.md`](../../knowledge/system-repair/ukui/system-tray-source.md)
-- 桌面服务启动顺序、D-Bus activation、面板/任务栏异常：[`../../knowledge/system-repair/ukui/system-service-manager.md`](../../knowledge/system-repair/ukui/system-service-manager.md)
-- 桌面 AI 组件、AI 子系统和残留清理：[`../../knowledge/system-repair/ukui/ai-subsystem.md`](../../knowledge/system-repair/ukui/ai-subsystem.md)
+进入 UKUI 索引后，按自启动、快捷键、全局搜索、托盘、桌面服务或 AI 组件残留继续读取具体知识；不要一次性读取整个 UKUI 目录。
+
+- [`../../knowledge/system-repair/ukui/README.md`](../../knowledge/system-repair/ukui/README.md)
 
 ## 最小诊断
 

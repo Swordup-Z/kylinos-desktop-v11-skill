@@ -6,11 +6,11 @@
 - systemd、D-Bus activation、系统服务异常。
 - 全盘体检后的低风险噪声清理，例如 motd、PAM 残留、rsyslog 旧配置。
 
-## 按子场景读取
+## 知识入口
 
-- 维护模式、磐石架构、系统级修复边界：[`../../knowledge/system-repair/system/maintenance.md`](../../knowledge/system-repair/system/maintenance.md)
-- 系统体检噪声、motd、PAM、rsyslog 残留：[`../../knowledge/system-repair/system/health-noise.md`](../../knowledge/system-repair/system/health-noise.md)
-- 桌面服务启动顺序、D-Bus activation、服务管理器：[`../../knowledge/system-repair/ukui/system-service-manager.md`](../../knowledge/system-repair/ukui/system-service-manager.md)
+进入系统基础索引后，按维护模式、系统保护、系统体检噪声或桌面服务启动链路继续读取具体知识。
+
+- [`../../knowledge/system-repair/system/README.md`](../../knowledge/system-repair/system/README.md)
 
 ## 最小诊断
 

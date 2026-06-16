@@ -6,7 +6,9 @@
 - 默认权限、full access、系统问题 skill 自动加载和渐进式披露。
 - 让 AI 工具在系统问题修复完成后自动沉淀经验。
 
-## 先读知识章节
+## 知识入口
+
+进入 AI 工具配置索引后，按 Codex 本地配置或多工具全局提示词选择具体知识。
 
 - [`../../knowledge/feature-enhancement/agent-tools/README.md`](../../knowledge/feature-enhancement/agent-tools/README.md)
 

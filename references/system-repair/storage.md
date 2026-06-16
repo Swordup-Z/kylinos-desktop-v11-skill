@@ -6,9 +6,11 @@
 - `/home` 挂载位置、backup 分区、overlay/KARE 合并视图判断。
 - 离线分区调整前的风险边界。
 
-## 先读知识章节
+## 知识入口
 
-- [`../../knowledge/system-repair/storage/layout.md`](../../knowledge/system-repair/storage/layout.md)
+进入存储与挂载索引后，按分区、挂载、DATA、`/home`、backup、overlay 或空间占用继续读取具体知识。
+
+- [`../../knowledge/system-repair/storage/README.md`](../../knowledge/system-repair/storage/README.md)
 
 ## 最小诊断
 

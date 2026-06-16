@@ -1,5 +1,7 @@
 # 系统问题修复：UKUI 桌面
 
+读取本文件后，只继续读取与用户问题匹配的一个具体章节；不要一次性读取整个 UKUI 目录。
+
 - [autostart.md](autostart.md)：开机自启动与设置界面显示。
 - [keybindings.md](keybindings.md)：全局快捷键与冲突。
 - [search.md](search.md)：全局搜索异常与结果来源。
