@@ -1,0 +1,51 @@
+From ce2e9e0ee91015f3844e5e0117b099b7c763c98c Mon Sep 17 00:00:00 2001
+From: zengjianqi <zengjianqi@kylinos.cn>
+Date: Tue, 16 Jun 2026 00:28:35 +0800
+Subject: [PATCH] ukui-search: follow theme colors in command editor
+
+---
+ search-ukcc-plugin/search.cpp | 19 ++++++++++++++-----
+ 1 file changed, 14 insertions(+), 5 deletions(-)
+
+diff --git a/search-ukcc-plugin/search.cpp b/search-ukcc-plugin/search.cpp
+index f24ea893..a7f45e6a 100644
+--- a/search-ukcc-plugin/search.cpp
++++ b/search-ukcc-plugin/search.cpp
+@@ -343,20 +343,29 @@ private:
+         setWindowTitle(QObject::tr("Custom commands"));
+         resize(760, 560);
+         setStyleSheet(QStringLiteral(
++            "QDialog {"
++            "  background-color: palette(window);"
++            "  color: palette(window-text);"
++            "}"
+             "QLineEdit, QPlainTextEdit, QSpinBox, QComboBox {"
+-            "  background-color: #ffffff;"
+-            "  border: 1px solid #b7bec8;"
++            "  background-color: palette(base);"
++            "  color: palette(text);"
++            "  border: 1px solid palette(mid);"
+             "  border-radius: 4px;"
+             "  padding: 4px 6px;"
+             "}"
+             "QLineEdit:focus, QPlainTextEdit:focus, QSpinBox:focus, QComboBox:focus {"
+-            "  border: 1px solid #2d7ff9;"
++            "  border: 1px solid palette(highlight);"
+             "}"
+             "QWidget#commandEditorPage {"
+-            "  background-color: #eef3f8;"
+-            "  border: 1px solid #d7dde6;"
++            "  background-color: palette(alternate-base);"
++            "  border: 1px solid palette(mid);"
+             "  border-radius: 6px;"
+             "}"
++            "QWidget#commandEditorPage QLabel {"
++            "  background-color: transparent;"
++            "  color: palette(window-text);"
++            "}"
+             "QPlainTextEdit { padding: 6px; }"
+             "QComboBox::drop-down { width: 0px; border: 0px; }"
+             "QComboBox::down-arrow { image: none; width: 0px; height: 0px; }"
+-- 
+2.43.0
+

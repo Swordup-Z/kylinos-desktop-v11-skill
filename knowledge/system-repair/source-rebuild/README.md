@@ -4,6 +4,7 @@
 
 - [`../../feature-enhancement/source-rebuild/README.md`](../../feature-enhancement/source-rebuild/README.md)
 - [`../../feature-enhancement/source-rebuild/local-customization-index.md`](../../feature-enhancement/source-rebuild/local-customization-index.md)
+- [`../../feature-enhancement/source-rebuild/patch-library.md`](../../feature-enhancement/source-rebuild/patch-library.md)
 
 与具体修复相关的源码章节放在对应场景下，例如：
 

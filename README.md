@@ -111,7 +111,7 @@ kylinos-desktop-v11-skill/
 └── README.en.md
 ```
 
-`references/` 是场景入口和策略路由层，包含适用场景、简短说明、知识入口和最小诊断。`knowledge/<type>/<scenario>/README.md` 是场景内索引，负责把问题继续路由到具体章节。具体 `<topic>.md` 才保存背景、诊断、修复或增强步骤、验证、回滚和清理规则。
+`references/` 是场景入口和策略路由层，包含适用场景、简短说明、知识入口和最小诊断。`knowledge/<type>/<scenario>/README.md` 是场景内索引，负责把问题继续路由到具体章节。具体 `<topic>.md` 保存背景、诊断、修复或增强步骤、验证、回滚和清理规则。通过源码修改实现的可复用功能还会在同场景 `patches/<feature-id>/` 下保存 patch 集和 `PATCHSET.md` 元数据。
 
 固定加载链路：
 
@@ -177,6 +177,7 @@ SKILL.md
 - UKUI 全局搜索搜索引擎增强。
 - UKUI 全局搜索自定义命令 provider 和图形化命令配置。
 - 本地源码客制化工作区、commit、patch、构建产物清理策略。
+- 可复用源码 patch 集、上游仓库、基线节点和冲突迁移策略。
 - AI 工具全局提示词、权限配置和多工具加载规则。
 - DATA 分区用于本地源码和构建工作的目录策略。
 

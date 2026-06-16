@@ -1,0 +1,1958 @@
+From c93060ad1b3487ff34b7cc8cc9b1a7ddf698e878 Mon Sep 17 00:00:00 2001
+From: zengjianqi <zengjianqi@kylinos.cn>
+Date: Tue, 16 Jun 2026 02:41:36 +0800
+Subject: [PATCH] ukui-search: enhance custom command panel
+
+---
+ frontend/CMakeLists.txt                       |   7 +-
+ frontend/control/list-labels/title-label.cpp  |  50 ++-
+ frontend/control/list-labels/title-label.h    |   5 +
+ .../stack-pages/search-page-section.cpp       |  84 +++++
+ .../control/stack-pages/search-page-section.h |   2 +
+ .../stack-pages/search-result-page.cpp        |   5 +
+ .../control/stack-pages/search-result-page.h  |   1 +
+ frontend/mainwindow.cpp                       | 119 +++++--
+ frontend/mainwindow.h                         |   2 +
+ frontend/view/best-list-view.cpp              |   9 +
+ frontend/view/best-list-view.h                |   1 +
+ frontend/view/result-view.cpp                 |   9 +
+ frontend/view/result-view.h                   |   1 +
+ .../commandsearch/command-search-plugin.cpp   | 315 +++++++++++++++++-
+ .../commandsearch/command-search-plugin.h     |   1 +
+ search-ukcc-plugin/search.cpp                 |  65 +++-
+ search-ukcc-plugin/translations/zh_CN.ts      | 243 +++++++-------
+ .../libukui-search/libukui-search_zh_CN.ts    |  50 ++-
+ 18 files changed, 798 insertions(+), 171 deletions(-)
+
+diff --git a/frontend/CMakeLists.txt b/frontend/CMakeLists.txt
+index 051b8560..d8e6c9f1 100644
+--- a/frontend/CMakeLists.txt
++++ b/frontend/CMakeLists.txt
+@@ -99,6 +99,11 @@ target_compile_definitions(frontend PRIVATE
+         UKUI_SEARCH_QM_INSTALL_PATH="${UKUI_SEARCH_QM_INSTALL_PATH}"
+         )
+ 
++find_library(TCMALLOC_MINIMAL_LIBRARY NAMES tcmalloc_minimal)
++if (NOT TCMALLOC_MINIMAL_LIBRARY)
++        message(FATAL_ERROR "tcmalloc_minimal library not found")
++endif()
++
+ target_link_libraries(frontend PRIVATE
+         Qt${QT_VERSION_MAJOR}::Core
+         Qt${QT_VERSION_MAJOR}::DBus
+@@ -111,7 +116,7 @@ target_link_libraries(frontend PRIVATE
+         ukui-search
+         chinese-segmentation
+         qtsingleapplication
+-        perftools
++        ${TCMALLOC_MINIMAL_LIBRARY}
+         ukui-quick::platform
+         ${UKUI_SEARCH_EXTERNAL_LIBS}
+         )
+diff --git a/frontend/control/list-labels/title-label.cpp b/frontend/control/list-labels/title-label.cpp
+index 39ba65ff..9ea8527a 100644
+--- a/frontend/control/list-labels/title-label.cpp
++++ b/frontend/control/list-labels/title-label.cpp
+@@ -35,7 +35,34 @@ TitleLabel::TitleLabel(const QString& parentId, QWidget * parent) : QLabel(paren
+ void TitleLabel::setShowMoreLableVisible()
+ {
+     m_showMoreLabel->setVisible(true);
+-    m_showMoreLabel->setLabel();
++    setExpandState(true);
++}
++
++void TitleLabel::setExpandState(bool expanded)
++{
++    if (expanded) {
++        m_showMoreLabel->setLabel();
++    } else {
++        m_showMoreLabel->resetLabel();
++    }
++
++    updateKeyboardHint();
++}
++
++void TitleLabel::setKeyboardHintActive(bool active)
++{
++    m_keyboardHintActive = active;
++    updateKeyboardHint();
++}
++
++void TitleLabel::updateKeyboardHint()
++{
++    if (!m_hintLabel) {
++        return;
++    }
++
++    m_hintLabel->setText(m_showMoreLabel->getExpanded() ? QStringLiteral("按 Tab 收起") : QStringLiteral("按 Tab 展开"));
++    m_hintLabel->setVisible(m_keyboardHintActive && m_showMoreLabel->isVisible());
+ }
+ 
+ void TitleLabel::initUi()
+@@ -50,6 +77,14 @@ void TitleLabel::initUi()
+     this->setFixedHeight(24);
+     m_titleLyt = new QHBoxLayout(this);
+     this->setLayout(m_titleLyt);
++    m_hintLabel = new QLabel(QStringLiteral("按 Tab 展开"), this);
++    m_hintLabel->setAccessibleName("ukui-search_TitleLabel" + m_parentId + "_HintLabel_tabExpandHint");
++    m_hintLabel->setAccessibleDescription("keyboard hint for expanding collapsed result list");
++    QFont hintFont = m_hintLabel->font();
++    hintFont.setPointSize(qMax(8, hintFont.pointSize() - 2));
++    m_hintLabel->setFont(hintFont);
++    m_hintLabel->setForegroundRole(QPalette::PlaceholderText);
++    m_hintLabel->hide();
+     m_showMoreLabel = new ShowMoreLabel(this);
+     m_showMoreLabel->setAccessibleName("ukui-search_TitleLabel" + m_parentId + "_ShowMoreLabel_showMoreLabel");
+     m_showMoreLabel->setAccessibleDescription("the show more label of plugin's title label");
+@@ -57,6 +92,7 @@ void TitleLabel::initUi()
+     m_showMoreLabel->adjustSize();
+     m_showMoreLabel->hide();
+     m_titleLyt->addStretch();
++    m_titleLyt->addWidget(m_hintLabel);
+     m_titleLyt->addWidget(m_showMoreLabel);
+ }
+ 
+@@ -64,6 +100,12 @@ void TitleLabel::initConnections()
+ {
+     connect(m_showMoreLabel, &ShowMoreLabel::showMoreClicked, this, &TitleLabel::showMoreClicked);
+     connect(m_showMoreLabel, &ShowMoreLabel::retractClicked, this, &TitleLabel::retractClicked);
++    connect(m_showMoreLabel, &ShowMoreLabel::showMoreClicked, this, [this]() {
++        setExpandState(true);
++    });
++    connect(m_showMoreLabel, &ShowMoreLabel::retractClicked, this, [this]() {
++        setExpandState(false);
++    });
+ 
+ }
+ 
+@@ -91,10 +133,12 @@ void TitleLabel::paintEvent(QPaintEvent * event)
+ 
+ void TitleLabel::onListLengthChanged(const int &length)
+ {
+-    m_showMoreLabel->setVisible(length > NUM_LIMIT_SHOWN_DEFAULT);
++    bool showExpandControls = length > NUM_LIMIT_SHOWN_DEFAULT;
++    m_showMoreLabel->setVisible(showExpandControls);
++    updateKeyboardHint();
+ }
+ 
+ void TitleLabel::labelReset()
+ {
+-    m_showMoreLabel->resetLabel();
++    setExpandState(false);
+ }
+diff --git a/frontend/control/list-labels/title-label.h b/frontend/control/list-labels/title-label.h
+index 439226fb..85972886 100644
+--- a/frontend/control/list-labels/title-label.h
++++ b/frontend/control/list-labels/title-label.h
+@@ -33,6 +33,8 @@ public:
+     ~TitleLabel() = default;
+ 
+     void setShowMoreLableVisible();
++    void setExpandState(bool expanded);
++    void setKeyboardHintActive(bool active);
+ 
+ protected:
+     void paintEvent(QPaintEvent *);
+@@ -40,11 +42,14 @@ protected:
+ private:
+     void initUi();
+     void initConnections();
++    void updateKeyboardHint();
+ 
+     QHBoxLayout * m_titleLyt = nullptr;
++    QLabel * m_hintLabel = nullptr;
+     ShowMoreLabel * m_showMoreLabel = nullptr;
+     int m_radius = 6;
+     QString m_parentId;
++    bool m_keyboardHintActive = false;
+ 
+ public Q_SLOTS:
+     void onListLengthChanged(const int &);
+diff --git a/frontend/control/stack-pages/search-page-section.cpp b/frontend/control/stack-pages/search-page-section.cpp
+index 141b2954..d8fd7517 100644
+--- a/frontend/control/stack-pages/search-page-section.cpp
++++ b/frontend/control/stack-pages/search-page-section.cpp
+@@ -112,6 +112,14 @@ bool ResultArea::moveWidget(const QString& pluginName, int index)
+     return false;
+ }
+ 
++void ResultArea::updateKeyboardHintForSelection(const QString &pluginID)
++{
++    m_bestListWidget->setKeyboardHintActive(pluginID == m_bestListWidget->getWidgetName());
++    for (ResultWidget *widget : m_widgetList) {
++        widget->setKeyboardHintActive(pluginID == widget->pluginId());
++    }
++}
++
+ /**
+  * @brief ResultArea::setVisibleList 设置哪些插件可见，默认全部可见
+  * @param list
+@@ -308,6 +316,77 @@ void ResultArea::pressUp()
+     }
+ }
+ 
++void ResultArea::pressTab()
++{
++    if (!m_isSelected) {
++        return;
++    }
++
++    auto toggleBestListIfNeeded = [this]() -> bool {
++        if (m_bestListWidget->getResultNum() <= NUM_LIMIT_SHOWN_DEFAULT) {
++            return false;
++        }
++
++        QModelIndex index = m_bestListWidget->getCurrentSelection();
++        if (m_bestListWidget->getExpandState()) {
++            int row = index.isValid() ? index.row() : 0;
++            int targetRow = row < NUM_LIMIT_SHOWN_DEFAULT ? row : NUM_LIMIT_SHOWN_DEFAULT - 1;
++            m_bestListWidget->reduceListSlot();
++            QModelIndex targetIndex = m_bestListWidget->getModlIndex(targetRow, 0);
++            m_bestListWidget->setResultSelection(targetIndex);
++            m_selectedPluginID = m_bestListWidget->getWidgetName();
++            sendKeyPressSignal(m_selectedPluginID);
++            return true;
++        }
++
++        m_bestListWidget->expandListSlot();
++        int targetRow = index.isValid() ? index.row() : 0;
++        QModelIndex targetIndex = m_bestListWidget->getModlIndex(targetRow, 0);
++        m_bestListWidget->setResultSelection(targetIndex);
++        m_selectedPluginID = m_bestListWidget->getWidgetName();
++        sendKeyPressSignal(m_selectedPluginID);
++        return true;
++    };
++
++    auto toggleResultWidgetIfNeeded = [this](ResultWidget *plugin) -> bool {
++        if (plugin->getResultNum() <= NUM_LIMIT_SHOWN_DEFAULT) {
++            return false;
++        }
++
++        QModelIndex index = plugin->getCurrentSelection();
++        if (plugin->getExpandState()) {
++            int row = index.isValid() ? index.row() : 0;
++            int targetRow = row < NUM_LIMIT_SHOWN_DEFAULT ? row : NUM_LIMIT_SHOWN_DEFAULT - 1;
++            plugin->reduceListSlot();
++            QModelIndex targetIndex = plugin->getModlIndex(targetRow, 0);
++            plugin->setResultSelection(targetIndex);
++            m_selectedPluginID = plugin->pluginId();
++            sendKeyPressSignal(m_selectedPluginID);
++            return true;
++        }
++
++        plugin->expandListSlot();
++        int targetRow = index.isValid() ? index.row() : 0;
++        QModelIndex targetIndex = plugin->getModlIndex(targetRow, 0);
++        plugin->setResultSelection(targetIndex);
++        m_selectedPluginID = plugin->pluginId();
++        sendKeyPressSignal(m_selectedPluginID);
++        return true;
++    };
++
++    if (m_selectedPluginID == m_bestListWidget->getWidgetName()) {
++        toggleBestListIfNeeded();
++        return;
++    }
++
++    for (ResultWidget *plugin : m_widgetList) {
++        if (m_selectedPluginID == plugin->pluginId()) {
++            toggleResultWidgetIfNeeded(plugin);
++            return;
++        }
++    }
++}
++
+ int ResultArea::getVScrollBarWidth()
+ {
+     if (verticalScrollBar()->isVisible()) {
+@@ -376,6 +455,7 @@ void ResultArea::setSelectionInfo(QString &pluginID)
+     m_detail_open_state = true;
+     m_isSelected = true;
+     m_selectedPluginID = pluginID;
++    updateKeyboardHintForSelection(m_selectedPluginID);
+     if (m_selectedPluginID != m_bestListWidget->getWidgetName()) {
+         m_bestListWidget->clearResultSelection();
+         m_isClicked = true;
+@@ -478,6 +558,7 @@ void ResultArea::initConnections()
+         m_isSelected = false;
+         m_selectedPluginID = "";
+         m_isClicked = false;
++        updateKeyboardHintForSelection(QString());
+     });
+     connect(this, &ResultArea::stopSearch, m_bestListWidget, &BestListWidget::stopSearch);
+     connect(m_bestListWidget, &BestListWidget::sizeChanged, this, &ResultArea::onWidgetSizeChanged);
+@@ -487,6 +568,7 @@ void ResultArea::initConnections()
+             m_bestListWidget->setResultSelection(index);
+             m_selectedPluginID = m_bestListWidget->getWidgetName();
+             m_isSelected = true;
++            updateKeyboardHintForSelection(m_selectedPluginID);
+ 
+             if(!m_widgetList.isEmpty()) {
+                 m_widgetList.last()->clearResultSelection();
+@@ -499,6 +581,7 @@ void ResultArea::initConnections()
+         m_detail_open_state = true;
+         m_isSelected = true;
+         m_selectedPluginID = m_bestListWidget->getWidgetName();
++        updateKeyboardHintForSelection(m_selectedPluginID);
+     });
+     connect(this, &ResultArea::clearSelectedRow, m_bestListWidget, &BestListWidget::clearSelectedRow);
+     connect(this, &ResultArea::resizeWidth, this, [=] (const int &size) {
+@@ -565,6 +648,7 @@ void ResultArea::setupConnectionsForWidget(ResultWidget *widget)
+                 widget->setResultSelection(index);
+                 m_isSelected = true;
+                 m_selectedPluginID = widget->pluginId();
++                updateKeyboardHintForSelection(m_selectedPluginID);
+             }
+         }
+     });
+diff --git a/frontend/control/stack-pages/search-page-section.h b/frontend/control/stack-pages/search-page-section.h
+index 4a075ca2..c4fbc9ce 100644
+--- a/frontend/control/stack-pages/search-page-section.h
++++ b/frontend/control/stack-pages/search-page-section.h
+@@ -60,6 +60,7 @@ public:
+     void pressEnter();
+     void pressDown();
+     void pressUp();
++    void pressTab();
+     int getVScrollBarWidth();
+ 
+     void setResultSelection();
+@@ -82,6 +83,7 @@ private:
+     void initUi();
+     void initConnections();
+     void setupConnectionsForWidget(ResultWidget *);
++    void updateKeyboardHintForSelection(const QString &pluginID);
+     static void setAutoTestAttribute(QWidget *widget, const QString &widgetType, const QString &widgetName, const QString &desc);
+ 
+     QWidget * m_widget = nullptr;
+diff --git a/frontend/control/stack-pages/search-result-page.cpp b/frontend/control/stack-pages/search-result-page.cpp
+index 28d4b17f..84fc7976 100644
+--- a/frontend/control/stack-pages/search-result-page.cpp
++++ b/frontend/control/stack-pages/search-result-page.cpp
+@@ -112,6 +112,11 @@ void SearchResultPage::pressDown()
+     this->m_resultArea->pressDown();
+ }
+ 
++void SearchResultPage::pressTab()
++{
++    this->m_resultArea->pressTab();
++}
++
+ bool SearchResultPage::getSelectedState()
+ {
+     return m_resultArea->getSelectedState();
+diff --git a/frontend/control/stack-pages/search-result-page.h b/frontend/control/stack-pages/search-result-page.h
+index 92c9bb32..f4321e4c 100644
+--- a/frontend/control/stack-pages/search-result-page.h
++++ b/frontend/control/stack-pages/search-result-page.h
+@@ -37,6 +37,7 @@ public:
+     void pressEnter();
+     void pressUp();
+     void pressDown();
++    void pressTab();
+     bool getSelectedState();
+     void sendResizeWidthSignal(int size);
+     void setWidth(int width);
+diff --git a/frontend/mainwindow.cpp b/frontend/mainwindow.cpp
+index c31aa568..e3743c0c 100644
+--- a/frontend/mainwindow.cpp
++++ b/frontend/mainwindow.cpp
+@@ -89,6 +89,7 @@ MainWindow::MainWindow(QWidget *parent) :
+     initUi();
+     initTimer();
+     installEventFilter(this);
++    qApp->installEventFilter(this);
+     initConnections();
+     m_proxy = new UkuiQuick::WindowProxy(this->windowHandle());
+ 
+@@ -112,6 +113,7 @@ MainWindow::MainWindow(QWidget *parent) :
+ }
+ 
+ MainWindow::~MainWindow() {
++    qApp->removeEventFilter(this);
+     if(m_askDialog) {
+         delete m_askDialog;
+         m_askDialog = NULL;
+@@ -396,31 +398,70 @@ void MainWindow::initTimer() {
+  */
+ bool MainWindow::tryHideMainwindow()
+ {
+-    if (QApplication::activeModalWidget() == nullptr) {
+-        qDebug()<<"Mainwindow will be hidden";
+-        m_currentSearchAsked = false;
+-        m_askTimer->stop();
+-        m_researchTimer->stop();
+-        Q_EMIT m_searchResultPage->stopSearch();
+-        this->clearSearchResult();
+-        this->hide();
+-        if(!m_releaseFreeMemoryTimerWorking) {
+-            m_releaseFreeMemoryTimerWorking = true;
+-            QTimer::singleShot(2000, this, [&](){
+-                if(!this->isVisible()) {
+-                    MallocExtension::instance()->ReleaseFreeMemory();
+-                }
+-                m_releaseFreeMemoryTimerWorking = false;
+-            });
++    closeSearchSession();
++    return true;
++}
++
++void MainWindow::closeSearchSession()
++{
++    qDebug()<<"Mainwindow search session will be closed";
++
++    if (QWidget *modal = QApplication::activeModalWidget()) {
++        if (isSearchOwnedWindow(modal)) {
++            qDebug()<<"Close owned modal widget before closing search session" << modal;
++            modal->close();
++            modal->hide();
+         }
+-        return true;
+-    } else {
+-        //有上层弹窗未关闭，不允许隐藏主界面
+-        qWarning()<<"There is a dialog onside, so that mainwindow can not be hidden.";
+-        return false;
++    }
++
++    const auto widgets = QApplication::topLevelWidgets();
++    for (QWidget *widget : widgets) {
++        if (widget && widget != this && widget->isVisible() && widget->isModal() && isSearchOwnedWindow(widget)) {
++            qDebug()<<"Close owned modal widget before closing search session" << widget;
++            widget->close();
++            widget->hide();
++        }
++    }
++
++    if (m_askDialog && m_askDialog->isVisible()) {
++        m_askDialog->close();
++        m_askDialog->hide();
++    }
++    m_isAskDialogVisible = false;
++    m_currentSearchAsked = false;
++    m_askTimer->stop();
++    m_researchTimer->stop();
++    Q_EMIT m_searchResultPage->stopSearch();
++    m_searchResultPage->hide();
++    resizeHeight(68);
++    tryMoveUp2Panel(68);
++    this->clearSearchResult();
++    QGuiApplication::inputMethod()->hide();
++    this->hide();
++
++    if(!m_releaseFreeMemoryTimerWorking) {
++        m_releaseFreeMemoryTimerWorking = true;
++        QTimer::singleShot(2000, this, [&](){
++            if(!this->isVisible()) {
++                MallocExtension::instance()->ReleaseFreeMemory();
++            }
++            m_releaseFreeMemoryTimerWorking = false;
++        });
+     }
+ }
+ 
++bool MainWindow::isSearchOwnedWindow(QWidget *window) const
++{
++    QWidget *widget = window;
++    while (widget) {
++        if (widget == this || widget == m_askDialog) {
++            return true;
++        }
++        widget = widget->parentWidget();
++    }
++    return false;
++}
++
+ /**
+  * @brief MainWindow::setSearchMethod 设置搜索模式
+  * @param is_index_search true为索引搜索，false为暴力搜索
+@@ -455,6 +496,13 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
+         } else {
+             m_searchResultPage->pressDown();
+         }
++    } else if (event->key() == Qt::Key_Tab) {
++        qDebug() << "Press Tab";
++        if (!m_searchResultPage->isHidden()) {
++            m_searchResultPage->pressTab();
++            event->accept();
++            return;
++        }
+     }
+     return QWidget::keyPressEvent(event);
+ }
+@@ -470,10 +518,37 @@ void MainWindow::paintEvent(QPaintEvent *event)
+ 
+ bool MainWindow::eventFilter(QObject *watched, QEvent *event)
+ {
++    if (isVisible() && (event->type() == QEvent::ShortcutOverride || event->type() == QEvent::KeyPress)) {
++        auto *keyEvent = static_cast<QKeyEvent *>(event);
++        if (keyEvent->key() == Qt::Key_Tab && keyEvent->modifiers() == Qt::NoModifier) {
++            QWidget *modal = QApplication::activeModalWidget();
++            if (modal && modal->isVisible()) {
++                return QObject::eventFilter(watched, event);
++            }
++
++            QWidget *watchedWidget = qobject_cast<QWidget *>(watched);
++            QWidget *activeWindow = QApplication::activeWindow();
++            bool ownedEvent = (watchedWidget && isSearchOwnedWindow(watchedWidget))
++                              || (activeWindow && isSearchOwnedWindow(activeWindow));
++            if (ownedEvent && !m_searchResultPage->isHidden()) {
++                keyEvent->accept();
++                if (event->type() == QEvent::KeyPress) {
++                    qDebug() << "Press Tab";
++                    m_searchResultPage->pressTab();
++                }
++                return true;
++            }
++        }
++    }
++
+     if (watched == this) {
+         //失焦退出
+         if (event->type() == QEvent::ActivationChange) {
+-            if (QApplication::activeWindow() != this && QApplication::activeWindow() != m_askDialog) {
++            QWidget *activeWindow = QApplication::activeWindow();
++            if (activeWindow && isSearchOwnedWindow(activeWindow)) {
++                return false;
++            }
++            if (activeWindow != this && activeWindow != m_askDialog) {
+                 tryHideMainwindow();
+                 return true;
+             }
+diff --git a/frontend/mainwindow.h b/frontend/mainwindow.h
+index 823f7a43..9e69cd3f 100644
+--- a/frontend/mainwindow.h
++++ b/frontend/mainwindow.h
+@@ -92,6 +92,8 @@ private:
+     double getTransparentData();
+     void initTimer();
+     bool tryHideMainwindow();
++    void closeSearchSession();
++    bool isSearchOwnedWindow(QWidget *window) const;
+     void setSearchMethodConfig(const bool& createIndex, const bool& noLongerAsk);
+     void tryMoveUp2Panel(int windowHeight);
+     static void setAutoTestAttribute(QWidget *widget, const QString &widgetType, const QString &widgetName, const QString &desc);
+diff --git a/frontend/view/best-list-view.cpp b/frontend/view/best-list-view.cpp
+index 9f92e55d..e7833727 100644
+--- a/frontend/view/best-list-view.cpp
++++ b/frontend/view/best-list-view.cpp
+@@ -326,12 +326,14 @@ int BestListWidget::getResultNum()
+ void BestListWidget::setResultSelection(const QModelIndex &index)
+ {
+     this->m_bestListView->setCurrentIndex(index);
++    m_titleLabel->setKeyboardHintActive(index.isValid());
+ }
+ 
+ void BestListWidget::clearResultSelection()
+ {
+     //this->m_bestListView->selectionModel()->clearSelection();
+     this->m_bestListView->setCurrentIndex(QModelIndex());
++    m_titleLabel->setKeyboardHintActive(false);
+ }
+ 
+ QModelIndex BestListWidget::getModlIndex(int row, int column)
+@@ -368,6 +370,11 @@ int BestListWidget::getResultHeight()
+ {
+     return this->m_bestListView->getResultHeight();
+ }
++
++void BestListWidget::setKeyboardHintActive(bool active)
++{
++    m_titleLabel->setKeyboardHintActive(active);
++}
+ /**
+  * @brief BestListWidget::expandListSlot 展开列表的槽函数
+  */
+@@ -375,6 +382,7 @@ void BestListWidget::expandListSlot()
+ {
+     qWarning()<<"List will be expanded!";
+     m_bestListView->setExpanded(true);
++    m_titleLabel->setExpandState(true);
+ }
+ 
+ /**
+@@ -384,6 +392,7 @@ void BestListWidget::reduceListSlot()
+ {
+     qWarning()<<"List will be reduced!";
+     m_bestListView->setExpanded(false);
++    m_titleLabel->setExpandState(false);
+ }
+ 
+ /**
+diff --git a/frontend/view/best-list-view.h b/frontend/view/best-list-view.h
+index fd7699b9..2b257cf3 100644
+--- a/frontend/view/best-list-view.h
++++ b/frontend/view/best-list-view.h
+@@ -102,6 +102,7 @@ public:
+     SearchPluginIface::ResultInfo getIndexResultInfo(QModelIndex &index);
+     const QString getPluginInfo(const QModelIndex&index);
+     int getResultHeight();
++    void setKeyboardHintActive(bool active);
+ 
+ private:
+     void initUi();
+diff --git a/frontend/view/result-view.cpp b/frontend/view/result-view.cpp
+index c036227d..a74ade26 100644
+--- a/frontend/view/result-view.cpp
++++ b/frontend/view/result-view.cpp
+@@ -64,12 +64,14 @@ void ResultWidget::setResultSelection(const QModelIndex &index)
+     //this->m_resultView->selectionModel()->clearSelection();
+     //this->m_resultView->setCurrentIndex(QModelIndex());
+     this->m_resultView->setCurrentIndex(index);
++    m_titleLabel->setKeyboardHintActive(index.isValid());
+ }
+ 
+ void ResultWidget::clearResultSelection()
+ {
+     //this->m_resultView->selectionModel()->clearSelection();
+     this->m_resultView->setCurrentIndex(QModelIndex());
++    m_titleLabel->setKeyboardHintActive(false);
+ }
+ 
+ QModelIndex ResultWidget::getModlIndex(int row, int column)
+@@ -103,6 +105,11 @@ void ResultWidget::resetTitleLabel()
+     Q_EMIT this->m_titleLabel->labelReset();
+ }
+ 
++void ResultWidget::setKeyboardHintActive(bool active)
++{
++    m_titleLabel->setKeyboardHintActive(active);
++}
++
+ void ResultWidget::setTitileLableHide(bool state)
+ {
+     m_titleLabel->setVisible(state);
+@@ -115,6 +122,7 @@ void ResultWidget::expandListSlot()
+ {
+     qWarning()<<"List will be expanded!";
+     m_resultView->setExpanded(true);
++    m_titleLabel->setExpandState(true);
+ }
+ 
+ /**
+@@ -124,6 +132,7 @@ void ResultWidget::reduceListSlot()
+ {
+     qWarning()<<"List will be reduced!";
+     m_resultView->setExpanded(false);
++    m_titleLabel->setExpandState(false);
+ }
+ 
+ /**
+diff --git a/frontend/view/result-view.h b/frontend/view/result-view.h
+index 15df0346..10a6d01c 100644
+--- a/frontend/view/result-view.h
++++ b/frontend/view/result-view.h
+@@ -98,6 +98,7 @@ public:
+     bool getExpandState();
+     SearchPluginIface::ResultInfo getIndexResultInfo(QModelIndex &index);
+     void resetTitleLabel();
++    void setKeyboardHintActive(bool active);
+     void setTitileLableHide(bool state);
+ 
+ public Q_SLOTS:
+diff --git a/libsearch/commandsearch/command-search-plugin.cpp b/libsearch/commandsearch/command-search-plugin.cpp
+index 87117f1f..6bb73eee 100644
+--- a/libsearch/commandsearch/command-search-plugin.cpp
++++ b/libsearch/commandsearch/command-search-plugin.cpp
+@@ -9,16 +9,25 @@
+ #include "command-search-plugin.h"
+ 
+ #include <QDebug>
++#include <QDialog>
+ #include <QDir>
++#include <QElapsedTimer>
+ #include <QFile>
+ #include <QFileInfo>
+ #include <QFontMetrics>
++#include <QKeyEvent>
++#include <QLabel>
+ #include <QJsonArray>
+ #include <QJsonDocument>
+ #include <QJsonObject>
++#include <QCloseEvent>
+ #include <QMessageBox>
++#include <QPlainTextEdit>
+ #include <QProcess>
++#include <QPushButton>
++#include <QTextCursor>
+ #include <QTextStream>
++#include <QTimer>
+ 
+ #include "data-collecter.h"
+ #include "file-utils.h"
+@@ -111,9 +120,7 @@ void CommandSearchPlugin::openAction(int actionkey, QString key, int type)
+     for (const CommandSearchEntry &entry : entries) {
+         if (entry.id == key) {
+             DataCollecter::collectLaunchEvent(QStringLiteral("commandSearch"), QStringLiteral("run"));
+-            if (runCommand(entry)) {
+-                invokeActions(InvokableAction::HideUI);
+-            }
++            runCommand(entry);
+             return;
+         }
+     }
+@@ -145,6 +152,251 @@ QString CommandSearchPlugin::configPath()
+ 
+ namespace {
+ 
++QString commandOutputSummary(const QByteArray &standardOutput, const QByteArray &standardError)
++{
++    QString text = QString::fromLocal8Bit(standardError);
++    if (text.trimmed().isEmpty()) {
++        text = QString::fromLocal8Bit(standardOutput);
++    }
++    text = text.trimmed();
++    if (text.size() > 4000) {
++        text = text.left(4000) + QStringLiteral("\n...");
++    }
++    return text;
++}
++
++class CommandConfirmDialog : public QDialog
++{
++public:
++    CommandConfirmDialog(const QString &title, const QString &message, QWidget *parent = nullptr)
++        : QDialog(parent)
++    {
++        setWindowTitle(title);
++        setModal(true);
++
++        auto *layout = new QVBoxLayout(this);
++        layout->setContentsMargins(24, 20, 24, 20);
++        layout->setSpacing(18);
++
++        auto *messageLabel = new QLabel(message, this);
++        messageLabel->setWordWrap(true);
++        messageLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
++        layout->addWidget(messageLabel);
++
++        auto *buttonLayout = new QHBoxLayout();
++        buttonLayout->addStretch();
++        m_cancelButton = new QPushButton(CommandSearchPlugin::tr("Cancel"), this);
++        m_runButton = new QPushButton(CommandSearchPlugin::tr("Run"), this);
++        buttonLayout->addWidget(m_cancelButton);
++        buttonLayout->addWidget(m_runButton);
++        layout->addLayout(buttonLayout);
++
++        const QString buttonStyle = QStringLiteral(
++            "QPushButton { min-width: 88px; padding: 6px 14px; }"
++            "QPushButton:focus { border: 2px solid palette(highlight); }");
++        m_cancelButton->setStyleSheet(buttonStyle);
++        m_runButton->setStyleSheet(buttonStyle);
++        m_cancelButton->setFocusPolicy(Qt::StrongFocus);
++        m_runButton->setFocusPolicy(Qt::StrongFocus);
++        m_cancelButton->setAutoDefault(false);
++        m_runButton->setAutoDefault(false);
++        m_cancelButton->setDefault(false);
++        m_runButton->setDefault(false);
++
++        connect(m_cancelButton, &QPushButton::clicked, this, &QDialog::reject);
++        connect(m_runButton, &QPushButton::clicked, this, &QDialog::accept);
++
++        m_guardTimer.start();
++        QTimer::singleShot(0, this, [this]() {
++            m_cancelButton->setFocus(Qt::OtherFocusReason);
++        });
++    }
++
++    QPushButton *cancelButton() const
++    {
++        return m_cancelButton;
++    }
++
++    QPushButton *runButton() const
++    {
++        return m_runButton;
++    }
++
++protected:
++    void keyPressEvent(QKeyEvent *event) override
++    {
++        if ((event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter || event->key() == Qt::Key_Space)
++            && m_guardTimer.elapsed() < 250) {
++            event->accept();
++            return;
++        }
++
++        if (event->key() == Qt::Key_Left || event->key() == Qt::Key_Right) {
++            focusNextButton();
++            event->accept();
++            return;
++        }
++
++        if (event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter) {
++            if (focusWidget() == m_runButton) {
++                accept();
++            } else {
++                reject();
++            }
++            event->accept();
++            return;
++        }
++
++        if (event->key() == Qt::Key_Escape) {
++            reject();
++            event->accept();
++            return;
++        }
++
++        QDialog::keyPressEvent(event);
++    }
++
++private:
++    void focusNextButton()
++    {
++        if (focusWidget() == m_cancelButton) {
++            m_runButton->setFocus(Qt::TabFocusReason);
++        } else {
++            m_cancelButton->setFocus(Qt::TabFocusReason);
++        }
++    }
++
++    QPushButton *m_cancelButton = nullptr;
++    QPushButton *m_runButton = nullptr;
++    QElapsedTimer m_guardTimer;
++};
++
++class CommandOutputDialog : public QDialog
++{
++public:
++    CommandOutputDialog(const QString &title, QWidget *parent = nullptr)
++        : QDialog(parent)
++    {
++        setWindowTitle(title);
++        resize(720, 480);
++        setModal(false);
++
++        auto *layout = new QVBoxLayout(this);
++        layout->setContentsMargins(16, 16, 16, 16);
++        layout->setSpacing(12);
++
++        m_statusLabel = new QLabel(CommandSearchPlugin::tr("Running..."), this);
++        layout->addWidget(m_statusLabel);
++
++        m_outputEdit = new QPlainTextEdit(this);
++        m_outputEdit->setReadOnly(true);
++        m_outputEdit->setLineWrapMode(QPlainTextEdit::NoWrap);
++        layout->addWidget(m_outputEdit, 1);
++
++        auto *buttonLayout = new QHBoxLayout();
++        buttonLayout->addStretch();
++        m_closeButton = new QPushButton(CommandSearchPlugin::tr("Close"), this);
++        m_closeButton->setEnabled(false);
++        buttonLayout->addWidget(m_closeButton);
++        layout->addLayout(buttonLayout);
++
++        connect(m_closeButton, &QPushButton::clicked, this, &QDialog::accept);
++    }
++
++    int run(const QString &command, const QStringList &args, const QString &workingDirectory, int timeout)
++    {
++        QProcess process;
++        if (!workingDirectory.isEmpty()) {
++            process.setWorkingDirectory(workingDirectory);
++        }
++
++        QTimer timer;
++        timer.setSingleShot(true);
++
++        connect(&process, &QProcess::readyReadStandardOutput, this, [&]() {
++            appendText(QString::fromLocal8Bit(process.readAllStandardOutput()));
++        });
++        connect(&process, &QProcess::readyReadStandardError, this, [&]() {
++            appendText(QString::fromLocal8Bit(process.readAllStandardError()));
++        });
++        connect(&timer, &QTimer::timeout, this, [&]() {
++            m_timedOut = true;
++            process.kill();
++        });
++        connect(&process,
++                QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
++                this,
++                [&](int exitCode, QProcess::ExitStatus exitStatus) {
++                    appendText(QString::fromLocal8Bit(process.readAllStandardOutput()));
++                    appendText(QString::fromLocal8Bit(process.readAllStandardError()));
++                    timer.stop();
++                    m_exitCode = exitCode;
++                    m_exitStatus = exitStatus;
++                    if (m_timedOut) {
++                        m_statusLabel->setText(CommandSearchPlugin::tr("Command timed out."));
++                    } else if (exitStatus != QProcess::NormalExit || exitCode != 0) {
++                        m_statusLabel->setText(CommandSearchPlugin::tr("Command failed."));
++                    } else {
++                        m_statusLabel->setText(CommandSearchPlugin::tr("Command completed successfully."));
++                    }
++                    m_running = false;
++                    m_closeButton->setEnabled(true);
++                    m_closeButton->setFocus(Qt::OtherFocusReason);
++                });
++        connect(&process, &QProcess::errorOccurred, this, [&](QProcess::ProcessError error) {
++            if (error == QProcess::FailedToStart) {
++                m_statusLabel->setText(CommandSearchPlugin::tr("Failed to start command."));
++                m_running = false;
++                m_closeButton->setEnabled(true);
++                m_closeButton->setFocus(Qt::OtherFocusReason);
++            }
++        });
++
++        process.start(command, args);
++        if (!process.waitForStarted(5000)) {
++            m_statusLabel->setText(CommandSearchPlugin::tr("Failed to start command."));
++            m_running = false;
++            m_closeButton->setEnabled(true);
++            m_closeButton->setFocus(Qt::OtherFocusReason);
++            exec();
++            return -1;
++        }
++
++        timer.start(timeout > 0 ? timeout : 30000);
++        exec();
++        return m_timedOut || m_exitStatus != QProcess::NormalExit ? -1 : m_exitCode;
++    }
++
++protected:
++    void closeEvent(QCloseEvent *event) override
++    {
++        if (m_running) {
++            event->ignore();
++            return;
++        }
++        QDialog::closeEvent(event);
++    }
++
++private:
++    void appendText(const QString &text)
++    {
++        if (text.isEmpty()) {
++            return;
++        }
++        m_outputEdit->moveCursor(QTextCursor::End);
++        m_outputEdit->insertPlainText(text);
++        m_outputEdit->moveCursor(QTextCursor::End);
++    }
++
++    QLabel *m_statusLabel = nullptr;
++    QPlainTextEdit *m_outputEdit = nullptr;
++    QPushButton *m_closeButton = nullptr;
++    bool m_running = true;
++    bool m_timedOut = false;
++    int m_exitCode = -1;
++    QProcess::ExitStatus m_exitStatus = QProcess::CrashExit;
++};
++
+ QString expandUserPathToken(const QString &text)
+ {
+     const QString home = QDir::homePath();
+@@ -214,6 +466,7 @@ bool CommandSearchPlugin::ensureDefaultConfig()
+         { QStringLiteral("confirm"), true },
+         { QStringLiteral("confirmMessage"), QStringLiteral("是否永久删除回收站中的所有项目？") },
+         { QStringLiteral("detached"), false },
++        { QStringLiteral("showOutput"), false },
+         { QStringLiteral("showInBestMatch"), true },
+         { QStringLiteral("timeout"), 30000 }
+     };
+@@ -269,6 +522,7 @@ QList<CommandSearchEntry> CommandSearchPlugin::loadCommands()
+         entry.confirmMessage = object.value(QStringLiteral("confirmMessage")).toString();
+         entry.confirm = object.value(QStringLiteral("confirm")).toBool(false);
+         entry.detached = object.value(QStringLiteral("detached")).toBool(false);
++        entry.showOutput = object.value(QStringLiteral("showOutput")).toBool(false);
+         entry.showInBestMatch = object.value(QStringLiteral("showInBestMatch")).toBool(true);
+         entry.timeout = object.value(QStringLiteral("timeout")).toInt(30000);
+ 
+@@ -331,17 +585,22 @@ SearchPluginIface::ResultInfo CommandSearchPlugin::createResultInfo(const Comman
+ 
+ bool CommandSearchPlugin::runCommand(const CommandSearchEntry &entry)
+ {
++    auto hideUiLater = [this]() {
++        QTimer::singleShot(100, this, [this]() {
++            invokeActions(InvokableAction::HideUI);
++        });
++        QTimer::singleShot(300, this, [this]() {
++            invokeActions(InvokableAction::HideUI);
++        });
++    };
++
+     if (entry.confirm) {
+-        QMessageBox msgBox(m_detailPage);
+-        const auto cancelButton = msgBox.addButton(tr("Cancel"), QMessageBox::RejectRole);
+-        const auto confirmButton = msgBox.addButton(tr("Run"), QMessageBox::AcceptRole);
+-        setAutoTestAttribute(confirmButton, "QPushButton", "runCommandConfirmButton", "the confirm button for running command");
+-        setAutoTestAttribute(cancelButton, "QPushButton", "runCommandCancelButton", "the cancel button for running command");
+-        msgBox.setIcon(QMessageBox::Warning);
+-        msgBox.setWindowTitle(entry.name);
+-        msgBox.setText(entry.confirmMessage.isEmpty() ? tr("Run this command?") : entry.confirmMessage);
+-        msgBox.exec();
+-        if (msgBox.clickedButton() != confirmButton) {
++        CommandConfirmDialog dialog(entry.name,
++                                    entry.confirmMessage.isEmpty() ? tr("Run this command?") : entry.confirmMessage,
++                                    m_detailPage ? m_detailPage->window() : nullptr);
++        setAutoTestAttribute(dialog.runButton(), "QPushButton", "runCommandConfirmButton", "the confirm button for running command");
++        setAutoTestAttribute(dialog.cancelButton(), "QPushButton", "runCommandCancelButton", "the cancel button for running command");
++        if (dialog.exec() != QDialog::Accepted) {
+             return false;
+         }
+     }
+@@ -359,10 +618,23 @@ bool CommandSearchPlugin::runCommand(const CommandSearchEntry &entry)
+         }
+         if (!started) {
+             QMessageBox::warning(m_detailPage, entry.name, tr("Failed to start command."));
++        } else {
++            hideUiLater();
+         }
+         return started;
+     }
+ 
++    const int timeout = entry.timeout > 0 ? entry.timeout : 30000;
++    if (entry.showOutput) {
++        CommandOutputDialog dialog(entry.name, m_detailPage ? m_detailPage->window() : nullptr);
++        const int exitCode = dialog.run(command, args, workingDirectory, timeout);
++        if (exitCode == 0) {
++            hideUiLater();
++            return true;
++        }
++        return false;
++    }
++
+     QProcess process;
+     if (!workingDirectory.isEmpty()) {
+         process.setWorkingDirectory(workingDirectory);
+@@ -372,19 +644,30 @@ bool CommandSearchPlugin::runCommand(const CommandSearchEntry &entry)
+         QMessageBox::warning(m_detailPage, entry.name, tr("Failed to start command."));
+         return false;
+     }
++    hideUiLater();
+ 
+-    const int timeout = entry.timeout > 0 ? entry.timeout : 30000;
+     if (!process.waitForFinished(timeout)) {
+         process.kill();
+         process.waitForFinished();
+-        QMessageBox::warning(m_detailPage, entry.name, tr("Command timed out."));
++        const QString details = commandOutputSummary(process.readAllStandardOutput(), process.readAllStandardError());
++        QMessageBox::warning(m_detailPage,
++                             entry.name,
++                             details.isEmpty() ? tr("Command timed out.")
++                                               : tr("Command timed out.") + QStringLiteral("\n\n") + details);
+         return false;
+     }
+ 
++    const QByteArray standardOutput = process.readAllStandardOutput();
++    const QByteArray standardError = process.readAllStandardError();
+     if (process.exitStatus() != QProcess::NormalExit || process.exitCode() != 0) {
+-        QMessageBox::warning(m_detailPage, entry.name, tr("Command failed."));
++        const QString details = commandOutputSummary(standardOutput, standardError);
++        QMessageBox::warning(m_detailPage,
++                             entry.name,
++                             details.isEmpty() ? tr("Command failed.")
++                                               : tr("Command failed.") + QStringLiteral("\n\n") + details);
+         return false;
+     }
++    QMessageBox::information(m_detailPage, entry.name, tr("Command completed successfully."));
+     return true;
+ }
+ 
+diff --git a/libsearch/commandsearch/command-search-plugin.h b/libsearch/commandsearch/command-search-plugin.h
+index 88793c39..f74bc428 100644
+--- a/libsearch/commandsearch/command-search-plugin.h
++++ b/libsearch/commandsearch/command-search-plugin.h
+@@ -38,6 +38,7 @@ struct CommandSearchEntry
+     QString confirmMessage;
+     bool confirm = false;
+     bool detached = false;
++    bool showOutput = false;
+     bool showInBestMatch = true;
+     int timeout = 30000;
+ };
+diff --git a/search-ukcc-plugin/search.cpp b/search-ukcc-plugin/search.cpp
+index 3fbc2a8b..13b0c903 100644
+--- a/search-ukcc-plugin/search.cpp
++++ b/search-ukcc-plugin/search.cpp
+@@ -25,6 +25,7 @@
+ #include <QComboBox>
+ #include <QDialog>
+ #include <QDialogButtonBox>
++#include <QColor>
+ #include <QFileDialog>
+ #include <QFileInfo>
+ #include <QFormLayout>
+@@ -43,6 +44,7 @@
+ #include <QSaveFile>
+ #include <QSizePolicy>
+ #include <QSpinBox>
++#include <QTimer>
+ #include <QSplitter>
+ #include <kylin-ai/common/common.h>
+ #include <libkyrtinfo.h>
+@@ -116,6 +118,7 @@ QJsonObject defaultEmptyTrashCommand()
+         { QStringLiteral("confirm"), true },
+         { QStringLiteral("confirmMessage"), QStringLiteral("是否永久删除回收站中的所有项目？") },
+         { QStringLiteral("detached"), false },
++        { QStringLiteral("showOutput"), false },
+         { QStringLiteral("showInBestMatch"), true },
+         { QStringLiteral("timeout"), 30000 }
+     };
+@@ -144,6 +147,11 @@ public:
+         loadConfig();
+     }
+ 
++    void reloadConfig()
++    {
++        loadConfig();
++    }
++
+ private:
+     void setupUi()
+     {
+@@ -199,10 +207,12 @@ private:
+         m_duplicateButton = new QPushButton(QObject::tr("Duplicate"), listPage);
+         m_deleteButton = new QPushButton(QObject::tr("Delete"), listPage);
+         m_saveCurrentButton = new QPushButton(QObject::tr("Save current command"), listPage);
++        m_reloadButton = new QPushButton(QObject::tr("Reload"), listPage);
+         listButtonLayout->addWidget(m_addButton, 0, 0);
+         listButtonLayout->addWidget(m_duplicateButton, 0, 1);
+         listButtonLayout->addWidget(m_deleteButton, 1, 0, 1, 2);
+         listButtonLayout->addWidget(m_saveCurrentButton, 2, 0, 1, 2);
++        listButtonLayout->addWidget(m_reloadButton, 3, 0, 1, 2);
+         listLayout->addLayout(listButtonLayout);
+ 
+         auto *editorPage = new QWidget(splitter);
+@@ -258,6 +268,7 @@ private:
+         m_confirmCheck = new QCheckBox(QObject::tr("Require confirmation before running"), editorPage);
+         m_confirmMessageEdit = new QLineEdit(editorPage);
+         m_detachedCheck = new QCheckBox(QObject::tr("Run in background"), editorPage);
++        m_showOutputCheck = new QCheckBox(QObject::tr("Show command output"), editorPage);
+         m_bestMatchCheck = new QCheckBox(QObject::tr("Show in best match"), editorPage);
+ 
+         m_keywordsEdit->setPlaceholderText(QObject::tr("One keyword per line"));
+@@ -277,6 +288,7 @@ private:
+         formLayout->addRow(QString(), m_confirmCheck);
+         formLayout->addRow(QObject::tr("Confirm message"), m_confirmMessageEdit);
+         formLayout->addRow(QString(), m_detachedCheck);
++        formLayout->addRow(QString(), m_showOutputCheck);
+         formLayout->addRow(QString(), m_bestMatchCheck);
+ 
+         splitter->addWidget(listPage);
+@@ -310,6 +322,9 @@ private:
+         connect(m_saveCurrentButton, &QPushButton::clicked, this, [this]() {
+             saveCurrentCommand();
+         });
++        connect(m_reloadButton, &QPushButton::clicked, this, [this]() {
++            loadConfig();
++        });
+         connect(m_iconDropdownButton, &QPushButton::clicked, this, [this]() {
+             m_iconEdit->showPopup();
+         });
+@@ -343,6 +358,7 @@ private:
+         connect(m_confirmCheck, &QCheckBox::stateChanged, this, changed);
+         connect(m_confirmMessageEdit, &QLineEdit::textChanged, this, changed);
+         connect(m_detachedCheck, &QCheckBox::stateChanged, this, changed);
++        connect(m_showOutputCheck, &QCheckBox::stateChanged, this, changed);
+         connect(m_bestMatchCheck, &QCheckBox::stateChanged, this, changed);
+     }
+ 
+@@ -433,6 +449,7 @@ private:
+             m_confirmCheck->setChecked(false);
+             m_confirmMessageEdit->clear();
+             m_detachedCheck->setChecked(false);
++            m_showOutputCheck->setChecked(false);
+             m_bestMatchCheck->setChecked(true);
+             m_loading = false;
+             return;
+@@ -451,6 +468,7 @@ private:
+         m_confirmCheck->setChecked(command.value(QStringLiteral("confirm")).toBool(false));
+         m_confirmMessageEdit->setText(command.value(QStringLiteral("confirmMessage")).toString());
+         m_detachedCheck->setChecked(command.value(QStringLiteral("detached")).toBool(false));
++        m_showOutputCheck->setChecked(command.value(QStringLiteral("showOutput")).toBool(false));
+         m_bestMatchCheck->setChecked(command.value(QStringLiteral("showInBestMatch")).toBool(true));
+         m_loading = false;
+     }
+@@ -460,7 +478,7 @@ private:
+         const QList<QWidget *> widgets {
+             m_idEdit, m_nameEdit, m_descriptionEdit, m_keywordsEdit, m_commandEdit,
+             m_argsEdit, m_iconEdit, m_iconDropdownButton, m_browseIconButton, m_workingDirectoryEdit, m_timeoutSpin,
+-            m_confirmCheck, m_confirmMessageEdit, m_detachedCheck, m_bestMatchCheck
++            m_confirmCheck, m_confirmMessageEdit, m_detachedCheck, m_showOutputCheck, m_bestMatchCheck
+         };
+         for (QWidget *widget : widgets) {
+             widget->setEnabled(enabled);
+@@ -505,6 +523,7 @@ private:
+         command.insert(QStringLiteral("confirm"), m_confirmCheck->isChecked());
+         command.insert(QStringLiteral("confirmMessage"), m_confirmMessageEdit->text().trimmed());
+         command.insert(QStringLiteral("detached"), m_detachedCheck->isChecked());
++        command.insert(QStringLiteral("showOutput"), m_showOutputCheck->isChecked());
+         command.insert(QStringLiteral("showInBestMatch"), m_bestMatchCheck->isChecked());
+         m_commands[m_currentRow] = command;
+ 
+@@ -550,6 +569,7 @@ private:
+             { QStringLiteral("confirm"), false },
+             { QStringLiteral("confirmMessage"), QString() },
+             { QStringLiteral("detached"), false },
++            { QStringLiteral("showOutput"), false },
+             { QStringLiteral("showInBestMatch"), true },
+             { QStringLiteral("timeout"), 30000 }
+         };
+@@ -577,7 +597,45 @@ private:
+         if (m_currentRow < 0 || m_currentRow >= m_commands.size()) {
+             return;
+         }
+-        if (QMessageBox::question(this, QObject::tr("Delete command"), QObject::tr("Delete selected command?")) != QMessageBox::Yes) {
++        QMessageBox msgBox(this);
++        msgBox.setWindowTitle(QObject::tr("Delete command"));
++        msgBox.setIcon(QMessageBox::Warning);
++        msgBox.setText(QObject::tr("Delete selected command?"));
++        auto *cancelButton = msgBox.addButton(QObject::tr("Cancel"), QMessageBox::RejectRole);
++        auto *deleteButton = msgBox.addButton(QObject::tr("Confirm"), QMessageBox::DestructiveRole);
++        deleteButton->setObjectName(QStringLiteral("destructiveButton"));
++        cancelButton->setObjectName(QStringLiteral("cancelButton"));
++        cancelButton->setDefault(true);
++        cancelButton->setAutoDefault(true);
++        deleteButton->setDefault(false);
++        deleteButton->setAutoDefault(false);
++        msgBox.setDefaultButton(cancelButton);
++        const QString commonButtonStyle = QStringLiteral(
++            "QPushButton { min-width: 88px; padding: 6px 14px; border-radius: 4px; }"
++            "QPushButton:focus { border: 2px solid palette(highlight); }");
++        cancelButton->setStyleSheet(commonButtonStyle + QStringLiteral(
++            "QPushButton { background: #1a73e8; color: white; border: 1px solid #1558b0; }"
++            "QPushButton:hover { background: #1967d2; }"
++            "QPushButton:pressed { background: #174ea6; }"));
++        deleteButton->setStyleSheet(commonButtonStyle + QStringLiteral(
++            "QPushButton { background: #d93025; color: white; border: 1px solid #b3261e; }"
++            "QPushButton:hover { background: #c5221f; }"
++            "QPushButton:pressed { background: #a50e0e; }"));
++        QPalette cancelPalette = cancelButton->palette();
++        cancelPalette.setColor(QPalette::Button, QColor(QStringLiteral("#1a73e8")));
++        cancelPalette.setColor(QPalette::ButtonText, Qt::white);
++        cancelButton->setPalette(cancelPalette);
++        cancelButton->setAutoFillBackground(true);
++        QPalette deletePalette = deleteButton->palette();
++        deletePalette.setColor(QPalette::Button, QColor(QStringLiteral("#d93025")));
++        deletePalette.setColor(QPalette::ButtonText, Qt::white);
++        deleteButton->setPalette(deletePalette);
++        deleteButton->setAutoFillBackground(true);
++        QTimer::singleShot(0, this, [cancelButton]() {
++            cancelButton->setFocus(Qt::OtherFocusReason);
++        });
++        msgBox.exec();
++        if (msgBox.clickedButton() != deleteButton) {
+             return;
+         }
+         m_commands.removeAt(m_currentRow);
+@@ -665,6 +723,7 @@ private:
+     QPushButton *m_duplicateButton = nullptr;
+     QPushButton *m_deleteButton = nullptr;
+     QPushButton *m_saveCurrentButton = nullptr;
++    QPushButton *m_reloadButton = nullptr;
+     QLineEdit *m_idEdit = nullptr;
+     QLineEdit *m_nameEdit = nullptr;
+     QLineEdit *m_descriptionEdit = nullptr;
+@@ -679,6 +738,7 @@ private:
+     QCheckBox *m_confirmCheck = nullptr;
+     QLineEdit *m_confirmMessageEdit = nullptr;
+     QCheckBox *m_detachedCheck = nullptr;
++    QCheckBox *m_showOutputCheck = nullptr;
+     QCheckBox *m_bestMatchCheck = nullptr;
+     QLabel *m_pathLabel = nullptr;
+     QDialogButtonBox *m_buttonBox = nullptr;
+@@ -1350,6 +1410,7 @@ void Search::onGSettingsValueChanged(const QString& key)
+ void Search::onCommandSearchBtnClicked()
+ {
+     CommandConfigDialog dialog(m_pluginWidget);
++    dialog.reloadConfig();
+     dialog.exec();
+ }
+ 
+diff --git a/search-ukcc-plugin/translations/zh_CN.ts b/search-ukcc-plugin/translations/zh_CN.ts
+index c4f8206b..9098a2db 100644
+--- a/search-ukcc-plugin/translations/zh_CN.ts
++++ b/search-ukcc-plugin/translations/zh_CN.ts
+@@ -4,179 +4,196 @@
+ <context>
+     <name>QObject</name>
+     <message>
+-        <location filename="../search.cpp" line="133"/>
+-        <location filename="../search.cpp" line="259"/>
+-        <location filename="../search.cpp" line="266"/>
+-        <location filename="../search.cpp" line="480"/>
+-        <location filename="../search.cpp" line="494"/>
+-        <location filename="../search.cpp" line="500"/>
+-        <location filename="../search.cpp" line="505"/>
++        <location filename="../search.cpp" line="158"/>
++        <location filename="../search.cpp" line="387"/>
++        <location filename="../search.cpp" line="394"/>
++        <location filename="../search.cpp" line="671"/>
++        <location filename="../search.cpp" line="685"/>
++        <location filename="../search.cpp" line="691"/>
++        <location filename="../search.cpp" line="696"/>
++        <location filename="../search.cpp" line="705"/>
+         <source>Custom commands</source>
+         <translation>自定义命令</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="146"/>
++        <location filename="../search.cpp" line="206"/>
+         <source>Add</source>
+         <translation>添加</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="147"/>
++        <location filename="../search.cpp" line="207"/>
+         <source>Duplicate</source>
+         <translation>复制</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="148"/>
++        <location filename="../search.cpp" line="208"/>
+         <source>Delete</source>
+         <translation>删除</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="201"/>
++        <location filename="../search.cpp" line="209"/>
+         <source>Save current command</source>
+         <translation>保存当前命令</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="171"/>
++        <location filename="../search.cpp" line="210"/>
++        <source>Reload</source>
++        <translation>刷新</translation>
++    </message>
++    <message>
++        <location filename="../search.cpp" line="268"/>
+         <source>Require confirmation before running</source>
+         <translation>运行前需要确认</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="173"/>
++        <location filename="../search.cpp" line="270"/>
+         <source>Run in background</source>
+         <translation>后台运行</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="174"/>
++        <location filename="../search.cpp" line="271"/>
++        <source>Show command output</source>
++        <translation>显示命令输出</translation>
++    </message>
++    <message>
++        <location filename="../search.cpp" line="272"/>
+         <source>Show in best match</source>
+         <translation>显示在最佳匹配中</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="176"/>
++        <location filename="../search.cpp" line="274"/>
+         <source>One keyword per line</source>
+         <translation>每行一个关键词</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="177"/>
++        <location filename="../search.cpp" line="275"/>
+         <source>One argument per line</source>
+         <translation>每行一个参数</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="181"/>
++        <location filename="../search.cpp" line="279"/>
+         <source>ID</source>
+         <translation>ID</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="182"/>
++        <location filename="../search.cpp" line="280"/>
+         <source>Name</source>
+         <translation>名称</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="183"/>
++        <location filename="../search.cpp" line="281"/>
+         <source>Description</source>
+         <translation>描述</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="184"/>
++        <location filename="../search.cpp" line="282"/>
+         <source>Keywords</source>
+         <translation>关键词</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="185"/>
++        <location filename="../search.cpp" line="283"/>
+         <source>Command</source>
+         <translation>命令</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="186"/>
++        <location filename="../search.cpp" line="284"/>
+         <source>Arguments</source>
+         <translation>参数</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="187"/>
++        <location filename="../search.cpp" line="285"/>
+         <source>Icon</source>
+         <translation>图标</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="188"/>
++        <location filename="../search.cpp" line="286"/>
+         <source>Working directory</source>
+         <translation>工作目录</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="189"/>
++        <location filename="../search.cpp" line="287"/>
+         <source>Timeout</source>
+         <translation>超时时间</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="191"/>
++        <location filename="../search.cpp" line="289"/>
+         <source>Confirm message</source>
+         <translation>确认提示</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="281"/>
++        <location filename="../search.cpp" line="306"/>
+         <source>Save and close</source>
+         <translation>保存并关闭</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="282"/>
++        <location filename="../search.cpp" line="307"/>
++        <location filename="../search.cpp" line="604"/>
+         <source>Cancel</source>
+         <translation>取消</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="259"/>
++        <location filename="../search.cpp" line="387"/>
+         <source>Failed to open command configuration.</source>
+         <translation>无法打开命令配置。</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="266"/>
++        <location filename="../search.cpp" line="394"/>
+         <source>Command configuration is not valid JSON. Saving will replace it.</source>
+         <translation>命令配置不是合法 JSON，保存时会替换该文件。</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="411"/>
+-        <location filename="../search.cpp" line="413"/>
++        <location filename="../search.cpp" line="563"/>
++        <location filename="../search.cpp" line="565"/>
+         <source>New command</source>
+         <translation>新命令</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="436"/>
++        <location filename="../search.cpp" line="589"/>
+         <source> Copy</source>
+         <translation> 副本</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="447"/>
++        <location filename="../search.cpp" line="601"/>
+         <source>Delete command</source>
+         <translation>删除命令</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="447"/>
++        <location filename="../search.cpp" line="603"/>
+         <source>Delete selected command?</source>
+         <translation>要删除选中的命令吗？</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="463"/>
++        <location filename="../search.cpp" line="605"/>
++        <source>Confirm</source>
++        <translation>确认</translation>
++    </message>
++    <message>
++        <location filename="../search.cpp" line="654"/>
+         <source>ID, name and command are required.</source>
+         <translation>ID、名称和命令不能为空。</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="467"/>
++        <location filename="../search.cpp" line="658"/>
+         <source>Command IDs must be unique.</source>
+         <translation>命令 ID 不能重复。</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="494"/>
++        <location filename="../search.cpp" line="685"/>
+         <source>Failed to create configuration directory.</source>
+         <translation>无法创建配置目录。</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="500"/>
++        <location filename="../search.cpp" line="691"/>
+         <source>Failed to write command configuration.</source>
+         <translation>无法写入命令配置。</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="505"/>
++        <location filename="../search.cpp" line="696"/>
+         <source>Failed to save command configuration.</source>
+         <translation>无法保存命令配置。</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="623"/>
++        <location filename="../search.cpp" line="705"/>
+         <source>Current command saved.</source>
+         <translation>当前命令已保存。</translation>
+     </message>
+@@ -184,14 +201,20 @@
+ <context>
+     <name>Search</name>
+     <message>
+-        <location filename="../search.cpp" line="550"/>
+-        <location filename="../search.cpp" line="812"/>
++        <location filename="../search.cpp" line="760"/>
++        <location filename="../search.cpp" line="1022"/>
+         <source>Search</source>
+         <translation>全局搜索</translation>
+         <extra-contents_path>/Search/Search</extra-contents_path>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="875"/>
++        <location filename="../search.cpp" line="1071"/>
++        <source>Custom commands</source>
++        <translation>自定义命令</translation>
++        <extra-contents_path>/Search/Custom commands</extra-contents_path>
++    </message>
++    <message>
++        <location filename="../search.cpp" line="1085"/>
+         <source>Create index</source>
+         <translation>创建索引</translation>
+         <extra-contents_path>/Search/Create index</extra-contents_path>
+@@ -201,13 +224,13 @@
+         <translation type="vanished">开启之后可以快速获取搜索结果</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="818"/>
++        <location filename="../search.cpp" line="1028"/>
+         <source>Default web searching engine</source>
+         <translation>默认互联网搜索引擎</translation>
+         <extra-contents_path>/Search/Default web searching engine</extra-contents_path>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="823"/>
++        <location filename="../search.cpp" line="1033"/>
+         <source>baidu</source>
+         <translation>百度</translation>
+     </message>
+@@ -220,23 +243,23 @@
+         <translation type="vanished">360</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="824"/>
++        <location filename="../search.cpp" line="1034"/>
+         <source>Bing</source>
+         <translation>Bing</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="825"/>
++        <location filename="../search.cpp" line="1035"/>
+         <source>Google</source>
+         <translation>Google</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="840"/>
++        <location filename="../search.cpp" line="1050"/>
+         <source>Search Software Store apps</source>
+         <translation>搜索应用商店应用</translation>
+         <extra-contents_path>/Search/Search Software Store apps</extra-contents_path>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="1038"/>
++        <location filename="../search.cpp" line="1248"/>
+         <source>Create AI index</source>
+         <translation>AI索引</translation>
+         <extra-contents_path>/Search/Create AI index</extra-contents_path>
+@@ -250,13 +273,13 @@
+         <translation type="vanished">模型未配置</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="1101"/>
++        <location filename="../search.cpp" line="1311"/>
+         <source>Block Folders</source>
+         <translation>排除的文件夹</translation>
+         <extra-contents_path>/Search/Block Folders</extra-contents_path>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="1108"/>
++        <location filename="../search.cpp" line="1318"/>
+         <source>Following folders will not be searched. You can set it by adding and removing folders.</source>
+         <translation>搜索将不查看以下文件夹，通过添加和删除可以设置排除的文件夹位置</translation>
+     </message>
+@@ -265,14 +288,14 @@
+         <translation type="vanished">添加</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="1406"/>
+-        <location filename="../search.cpp" line="1479"/>
++        <location filename="../search.cpp" line="1617"/>
++        <location filename="../search.cpp" line="1690"/>
+         <source>delete</source>
+         <translation>删除</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="1539"/>
+-        <location filename="../search.cpp" line="1598"/>
++        <location filename="../search.cpp" line="1750"/>
++        <location filename="../search.cpp" line="1809"/>
+         <source>Directories</source>
+         <translation>文件夹</translation>
+     </message>
+@@ -290,34 +313,34 @@
+         <translation type="vanished">模糊搜索</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="677"/>
++        <location filename="../search.cpp" line="887"/>
+         <source>Create file content index will increase the usage of memory and CPU, do you still want to open it?</source>
+         <translation>创建文件内容索引可能会影响内存和CPU占用率，是否开启？</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="678"/>
+-        <location filename="../search.cpp" line="738"/>
++        <location filename="../search.cpp" line="888"/>
++        <location filename="../search.cpp" line="948"/>
+         <source>OK</source>
+         <translation>开启</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="734"/>
++        <location filename="../search.cpp" line="944"/>
+         <source>Devices with 8GB RAM or lower are not recommended to create AI index, as it may result in system instability (such as failure to wake from sleep or other issues).</source>
+         <translation>内存8G及以下设备不建议开启AI索引，可能导致系统运行异常（休眠无法唤醒等）。</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="736"/>
++        <location filename="../search.cpp" line="946"/>
+         <source>Create AI index on low-performance machines may cause the system lagging, do you still want to open it?</source>
+         <translation>低性能设备开启AI索引可能会造成间歇性卡顿，请确认设备性能，是否开启？</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="891"/>
++        <location filename="../search.cpp" line="1101"/>
+         <source>Create file index</source>
+         <translation>文件索引</translation>
+         <extra-contents_path>/Search/Create file index</extra-contents_path>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="921"/>
++        <location filename="../search.cpp" line="1131"/>
+         <source>Create file content index</source>
+         <translation>文件内容索引</translation>
+         <extra-contents_path>/Search/Create file content index</extra-contents_path>
+@@ -331,7 +354,7 @@
+         <translation type="vanished">仅显示与输入内容完全一致的搜索结果</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="1006"/>
++        <location filename="../search.cpp" line="1216"/>
+         <source>Index the text in pictures</source>
+         <translation>索引图片中的文字</translation>
+         <extra-contents_path>/Search/Use OCR to index the text in pictures</extra-contents_path>
+@@ -342,152 +365,146 @@
+         <extra-contents_path>/Search/Create ai index</extra-contents_path>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="1062"/>
++        <location filename="../search.cpp" line="1272"/>
+         <source>Search Folders</source>
+         <translation>搜索范围</translation>
+         <extra-contents_path>/Search/Search Folders</extra-contents_path>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="1070"/>
++        <location filename="../search.cpp" line="1280"/>
+         <source>Following folders will be searched. You can set it by adding and removing folders.</source>
+         <translation>以下文件的内容将出现在全局搜索的结果中</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="1540"/>
++        <location filename="../search.cpp" line="1751"/>
+         <source>select blocked folder</source>
+         <translation>选择排除的文件夹</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="1541"/>
+-        <location filename="../search.cpp" line="1600"/>
++        <location filename="../search.cpp" line="1752"/>
++        <location filename="../search.cpp" line="1811"/>
+         <source>Select</source>
+         <translation>选择</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="1542"/>
+-        <location filename="../search.cpp" line="1601"/>
++        <location filename="../search.cpp" line="1753"/>
++        <location filename="../search.cpp" line="1812"/>
+         <source>Position: </source>
+         <translation>位置</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="1543"/>
+-        <location filename="../search.cpp" line="1602"/>
++        <location filename="../search.cpp" line="1754"/>
++        <location filename="../search.cpp" line="1813"/>
+         <source>FileName: </source>
+         <translation>文件名</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="1544"/>
+-        <location filename="../search.cpp" line="1603"/>
++        <location filename="../search.cpp" line="1755"/>
++        <location filename="../search.cpp" line="1814"/>
+         <source>FileType: </source>
+         <translation>类型</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="681"/>
+-        <location filename="../search.cpp" line="741"/>
+-        <location filename="../search.cpp" line="1545"/>
+-        <location filename="../search.cpp" line="1604"/>
++        <location filename="../search.cpp" line="891"/>
++        <location filename="../search.cpp" line="951"/>
++        <location filename="../search.cpp" line="1756"/>
++        <location filename="../search.cpp" line="1815"/>
+         <source>Cancel</source>
+         <translation>取消</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="1560"/>
+-        <location filename="../search.cpp" line="1564"/>
+-        <location filename="../search.cpp" line="1568"/>
+-        <location filename="../search.cpp" line="1572"/>
+-        <location filename="../search.cpp" line="1629"/>
+-        <location filename="../search.cpp" line="1632"/>
+-        <location filename="../search.cpp" line="1635"/>
+-        <location filename="../search.cpp" line="1638"/>
+-        <location filename="../search.cpp" line="1641"/>
+-        <location filename="../search.cpp" line="1644"/>
+-        <location filename="../search.cpp" line="1647"/>
++        <location filename="../search.cpp" line="1771"/>
++        <location filename="../search.cpp" line="1775"/>
++        <location filename="../search.cpp" line="1779"/>
++        <location filename="../search.cpp" line="1783"/>
++        <location filename="../search.cpp" line="1840"/>
++        <location filename="../search.cpp" line="1843"/>
++        <location filename="../search.cpp" line="1846"/>
++        <location filename="../search.cpp" line="1849"/>
++        <location filename="../search.cpp" line="1852"/>
++        <location filename="../search.cpp" line="1855"/>
++        <location filename="../search.cpp" line="1858"/>
+         <source>Warning</source>
+         <translation>警告</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="1572"/>
+-        <location filename="../search.cpp" line="1644"/>
++        <location filename="../search.cpp" line="1783"/>
++        <location filename="../search.cpp" line="1855"/>
+         <source>Add search folder failed, hidden&#x3000;path is not supported!</source>
+         <translation>添加失败，不支持隐藏目录！</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="1647"/>
++        <location filename="../search.cpp" line="1858"/>
+         <source>Add search folder failed, permission denied!</source>
+         <translation>添加失败，该目录无权限访问！</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="1560"/>
++        <location filename="../search.cpp" line="1771"/>
+         <source>Add blocked folder failed, its parent dir has been added!</source>
+         <translation>添加失败，父目录已被添加！</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="861"/>
+-        <source>Custom commands</source>
+-        <translation>自定义命令</translation>
+-        <extra-contents_path>/Search/Custom commands</extra-contents_path>
+-    </message>
+-    <message>
+-        <location filename="../search.cpp" line="863"/>
++        <location filename="../search.cpp" line="1073"/>
+         <source>Configure</source>
+         <translation>配置</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="953"/>
++        <location filename="../search.cpp" line="1163"/>
+         <source>Exact Match</source>
+         <translation>精确搜索</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="958"/>
++        <location filename="../search.cpp" line="1168"/>
+         <source>file content fully matches keywords</source>
+         <translation>文件内容与输入关键词完全匹配</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="969"/>
++        <location filename="../search.cpp" line="1179"/>
+         <source>Partial match</source>
+         <translation>模糊搜索</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="974"/>
++        <location filename="../search.cpp" line="1184"/>
+         <source>file content partially matches keywords</source>
+         <translation>文件内容与输入关键词部分匹配</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="1564"/>
++        <location filename="../search.cpp" line="1775"/>
+         <source>Add blocked folder failed, choosen path is not exist!</source>
+         <translation>添加失败，要添加的路径不存在！</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="1568"/>
++        <location filename="../search.cpp" line="1779"/>
+         <source>Add blocked folder failed, it has already been blocked!</source>
+         <translation>添加失败，这个文件夹已经被添加过了！</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="1599"/>
++        <location filename="../search.cpp" line="1810"/>
+         <source>select search folder</source>
+         <translation>选择要搜索的文件夹</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="1632"/>
++        <location filename="../search.cpp" line="1843"/>
+         <source>Add search folder failed, choosen path is not supported currently!</source>
+         <translation>添加失败，暂不支持该目录！</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="1638"/>
++        <location filename="../search.cpp" line="1849"/>
+         <source>Add search folder failed, another path which is in the same device has been added!</source>
+         <translation>添加失败，文件夹位于重复挂载设备下，相同内容的文件夹已被添加！</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="1629"/>
++        <location filename="../search.cpp" line="1840"/>
+         <source>Add search folder failed, choosen path or its parent dir has been added!</source>
+         <translation>添加失败，该目录或其父目录已被添加！</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="1635"/>
++        <location filename="../search.cpp" line="1846"/>
+         <source>Add search folder failed, choosen path is in repeat mounted devices and another path which is in the same device has been added!</source>
+         <translation>添加失败，文件夹位于重复挂载设备下，且该设备另一个挂载点的文件夹已被添加！</translation>
+     </message>
+     <message>
+-        <location filename="../search.cpp" line="1641"/>
++        <location filename="../search.cpp" line="1852"/>
+         <source>Add search folder failed, choosen path is not exists!</source>
+         <translation>添加失败，要添加的路径不存在！</translation>
+     </message>
+diff --git a/translations/libukui-search/libukui-search_zh_CN.ts b/translations/libukui-search/libukui-search_zh_CN.ts
+index 20d79164..200ea428 100644
+--- a/translations/libukui-search/libukui-search_zh_CN.ts
++++ b/translations/libukui-search/libukui-search_zh_CN.ts
+@@ -19,7 +19,7 @@
+         <translation>前往配置相关功能以使用内容识别搜索</translation>
+     </message>
+     <message>
+-        <location filename="../../libsearch/commandsearch/command-search-plugin.cpp" line="313"/>
++        <location filename="../../libsearch/commandsearch/command-search-plugin.cpp" line="569"/>
+         <source>Description:</source>
+         <translation>描述：</translation>
+     </message>
+@@ -189,52 +189,74 @@
+ <context>
+     <name>UkuiSearch::CommandSearchPlugin</name>
+     <message>
+-        <location filename="../../libsearch/commandsearch/command-search-plugin.cpp" line="33"/>
+-        <location filename="../../libsearch/commandsearch/command-search-plugin.cpp" line="134"/>
+-        <location filename="../../libsearch/commandsearch/command-search-plugin.cpp" line="335"/>
+-        <location filename="../../libsearch/commandsearch/command-search-plugin.cpp" line="424"/>
++        <location filename="../../libsearch/commandsearch/command-search-plugin.cpp" line="42"/>
++        <location filename="../../libsearch/commandsearch/command-search-plugin.cpp" line="143"/>
++        <location filename="../../libsearch/commandsearch/command-search-plugin.cpp" line="189"/>
++        <location filename="../../libsearch/commandsearch/command-search-plugin.cpp" line="709"/>
+         <source>Run</source>
+         <translation>运行</translation>
+     </message>
+     <message>
+-        <location filename="../../libsearch/commandsearch/command-search-plugin.cpp" line="52"/>
++        <location filename="../../libsearch/commandsearch/command-search-plugin.cpp" line="61"/>
+         <source>Custom command search.</source>
+         <translation>自定义命令搜索。</translation>
+     </message>
+     <message>
+-        <location filename="../../libsearch/commandsearch/command-search-plugin.cpp" line="57"/>
++        <location filename="../../libsearch/commandsearch/command-search-plugin.cpp" line="66"/>
+         <source>Command Search</source>
+         <translation>命令</translation>
+     </message>
+     <message>
+-        <location filename="../../libsearch/commandsearch/command-search-plugin.cpp" line="132"/>
+-        <location filename="../../libsearch/commandsearch/command-search-plugin.cpp" line="408"/>
++        <location filename="../../libsearch/commandsearch/command-search-plugin.cpp" line="141"/>
++        <location filename="../../libsearch/commandsearch/command-search-plugin.cpp" line="693"/>
+         <source>Command</source>
+         <translation>命令</translation>
+     </message>
+     <message>
+-        <location filename="../../libsearch/commandsearch/command-search-plugin.cpp" line="334"/>
++        <location filename="../../libsearch/commandsearch/command-search-plugin.cpp" line="188"/>
+         <source>Cancel</source>
+         <translation>取消</translation>
+     </message>
++    <message>
++        <location filename="../../libsearch/commandsearch/command-search-plugin.cpp" line="288"/>
++        <source>Running...</source>
++        <translation>正在运行...</translation>
++    </message>
++    <message>
++        <location filename="../../libsearch/commandsearch/command-search-plugin.cpp" line="298"/>
++        <source>Close</source>
++        <translation>关闭</translation>
++    </message>
+     <message>
+         <location filename="../../libsearch/commandsearch/command-search-plugin.cpp" line="340"/>
++        <location filename="../../libsearch/commandsearch/command-search-plugin.cpp" line="670"/>
++        <source>Command completed successfully.</source>
++        <translation>命令执行成功。</translation>
++    </message>
++    <message>
++        <location filename="../../libsearch/commandsearch/command-search-plugin.cpp" line="599"/>
+         <source>Run this command?</source>
+         <translation>是否运行此命令？</translation>
+     </message>
+     <message>
+-        <location filename="../../libsearch/commandsearch/command-search-plugin.cpp" line="359"/>
+-        <location filename="../../libsearch/commandsearch/command-search-plugin.cpp" line="370"/>
++        <location filename="../../libsearch/commandsearch/command-search-plugin.cpp" line="348"/>
++        <location filename="../../libsearch/commandsearch/command-search-plugin.cpp" line="357"/>
++        <location filename="../../libsearch/commandsearch/command-search-plugin.cpp" line="620"/>
++        <location filename="../../libsearch/commandsearch/command-search-plugin.cpp" line="644"/>
+         <source>Failed to start command.</source>
+         <translation>启动命令失败。</translation>
+     </message>
+     <message>
+-        <location filename="../../libsearch/commandsearch/command-search-plugin.cpp" line="378"/>
++        <location filename="../../libsearch/commandsearch/command-search-plugin.cpp" line="336"/>
++        <location filename="../../libsearch/commandsearch/command-search-plugin.cpp" line="655"/>
++        <location filename="../../libsearch/commandsearch/command-search-plugin.cpp" line="656"/>
+         <source>Command timed out.</source>
+         <translation>命令执行超时。</translation>
+     </message>
+     <message>
+-        <location filename="../../libsearch/commandsearch/command-search-plugin.cpp" line="383"/>
++        <location filename="../../libsearch/commandsearch/command-search-plugin.cpp" line="338"/>
++        <location filename="../../libsearch/commandsearch/command-search-plugin.cpp" line="666"/>
++        <location filename="../../libsearch/commandsearch/command-search-plugin.cpp" line="667"/>
+         <source>Command failed.</source>
+         <translation>命令执行失败。</translation>
+     </message>
+-- 
+2.43.0
+

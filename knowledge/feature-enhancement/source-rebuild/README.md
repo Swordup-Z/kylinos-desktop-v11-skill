@@ -12,11 +12,12 @@
 ## 子分类
 
 - 本地源码客制化索引、DATA 分区工作区、`CUSTOMIZATION.md`、patch 保存和构建/回滚清理规则：读取 [local-customization-index.md](local-customization-index.md)。
+- 可复用源码 patch 在 skill 中的保存、元数据、基线节点和冲突处理规则：读取 [patch-library.md](patch-library.md)。
 - UKUI 全局搜索默认互联网搜索引擎源码级修改：读取 [`../ukui/search-web-engine.md`](../ukui/search-web-engine.md)。
 - UKUI 全局搜索自定义命令 provider 源码级扩展：读取 [`../ukui/search-command-provider.md`](../ukui/search-command-provider.md)。
 - UKUI 系统托盘隐藏区稳定性源码级修改：读取 [`../../system-repair/ukui/system-tray-source.md`](../../system-repair/ukui/system-tray-source.md)。
 
-只读取与当前源码修改匹配的一项子分类。需要本地源码目录、patch、回滚和索引策略时才读取 `local-customization-index.md`。
+只读取与当前源码修改匹配的一项子分类。需要本地源码目录、现场 patch、回滚和索引策略时才读取 `local-customization-index.md`；需要跨机器复用 patch 或迁移到新系统版本时才读取 `patch-library.md`。
 
 后续新增源码重编译问题时，按组件或场景新增文件，例如：
 
@@ -130,6 +131,8 @@ git -C "/data/usershare/kylinos-local-sources/<component-or-fix>/<source-tree>" 
 ```
 
 该 commit 和 patch 只作为本地继续定制的依据；不要 push 到上游或公开远端。系统包升级后，应先判断新版本是否已经包含同类功能，再把 patch 套到新的源码节点上重新构建、重新做 ABI/RPATH/导出符号验证和回滚包准备。
+
+如果该 patch 对其他机器或后续系统版本具备复用价值，还必须按 [patch-library.md](patch-library.md) 同步沉淀到 skill 的对应 knowledge 场景目录，记录上游仓库、基线节点、适用系统包版本、patch 顺序和冲突处理策略。
 
 为了实现渐进式披露和快速查找，必须维护两级映射：
 
@@ -268,6 +271,7 @@ sha256sum -c "/data/usershare/kylinos-local-sources/<component-or-fix>/rollback/
 - 对应本机包和关键文件。
 - 源码匹配判断方法。
 - 最小补丁位置。
+- 可复用 patch 集路径、上游仓库、基线节点和冲突处理策略。
 - 构建依赖和避免误装的注意事项。
 - 安装前 ABI/依赖/RPATH 验证。
 - 安装、验证和回滚方案。

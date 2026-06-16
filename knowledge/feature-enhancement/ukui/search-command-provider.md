@@ -6,6 +6,8 @@
 
 如果只是屏蔽软件商店结果或调整已有设置，改读 [`../../system-repair/ukui/search.md`](../../system-repair/ukui/search.md)。如果要新增通用 provider、替换系统库或重新构建 `ukui-search`，同时按 `knowledge/feature-enhancement/source-rebuild/README.md` 执行源码重编译通用流程。
 
+可复用 patch 集保存在 [`patches/ukui-search-custom-command-panel/PATCHSET.md`](patches/ukui-search-custom-command-panel/PATCHSET.md)。只有需要把该功能套到当前系统源码包时才读取 patch 集；读取前先确认当前系统包版本和匹配源码节点。
+
 ## 设计原则
 
 - 优先做通用 provider，不要为每个动作都硬编码 C++ 分支。

@@ -1,0 +1,131 @@
+From 3fbb77ff40f983cfc2093f021bfd99c82b4031de Mon Sep 17 00:00:00 2001
+From: zengjianqi <zengjianqi@kylinos.cn>
+Date: Tue, 16 Jun 2026 00:06:27 +0800
+Subject: [PATCH] ukui-search: load command icons asynchronously
+
+---
+ search-ukcc-plugin/search.cpp | 82 ++++++++++++++++++++++++++++++++---
+ 1 file changed, 76 insertions(+), 6 deletions(-)
+
+diff --git a/search-ukcc-plugin/search.cpp b/search-ukcc-plugin/search.cpp
+index 6c2dcd25..bfea016a 100644
+--- a/search-ukcc-plugin/search.cpp
++++ b/search-ukcc-plugin/search.cpp
+@@ -36,7 +36,9 @@
+ #include <QLabel>
+ #include <QLineEdit>
+ #include <QListWidget>
++#include <QMetaObject>
+ #include <QPlainTextEdit>
++#include <QPointer>
+ #include <QString>
+ #include <QProcess>
+ #include <QPushButton>
+@@ -45,6 +47,7 @@
+ #include <QSizePolicy>
+ #include <QSpinBox>
+ #include <QSplitter>
++#include <QThread>
+ #include <kylin-ai/common/common.h>
+ #include <libkyrtinfo.h>
+ #include <klineframe.h>
+@@ -160,6 +163,64 @@ QIcon themedIcon(const QString &name)
+     return QIcon::fromTheme(trimmed, QIcon::fromTheme(QStringLiteral("system-run")));
+ }
+ 
++class IconComboBox : public QComboBox
++{
++public:
++    explicit IconComboBox(QWidget *parent = nullptr)
++        : QComboBox(parent)
++    {
++    }
++
++protected:
++    void showPopup() override
++    {
++        startLoadingAllIconNames();
++        QComboBox::showPopup();
++    }
++
++private:
++    void startLoadingAllIconNames()
++    {
++        if (m_allIconNamesLoaded || m_loadingAllIconNames) {
++            return;
++        }
++        m_loadingAllIconNames = true;
++
++        QPointer<IconComboBox> combo(this);
++        QThread *worker = QThread::create([combo]() {
++            const QStringList names = availableIconNames();
++            if (!combo) {
++                return;
++            }
++            QMetaObject::invokeMethod(combo.data(), [combo, names]() {
++                if (!combo) {
++                    return;
++                }
++
++                QSet<QString> existing;
++                for (int i = 0; i < combo->count(); ++i) {
++                    existing.insert(combo->itemText(i));
++                }
++
++                const QString current = combo->currentText();
++                for (const QString &name : names) {
++                    if (!existing.contains(name)) {
++                        combo->addItem(name);
++                    }
++                }
++                combo->setEditText(current);
++                combo->m_allIconNamesLoaded = true;
++                combo->m_loadingAllIconNames = false;
++            }, Qt::QueuedConnection);
++        });
++        connect(worker, &QThread::finished, worker, &QObject::deleteLater);
++        worker->start();
++    }
++
++    bool m_allIconNamesLoaded = false;
++    bool m_loadingAllIconNames = false;
++};
++
+ class CommandConfigDialog : public QDialog
+ {
+ public:
+@@ -223,16 +284,25 @@ private:
+         m_iconPreview = new QLabel(iconWidget);
+         m_iconPreview->setFixedSize(32, 32);
+         m_iconPreview->setAlignment(Qt::AlignCenter);
+-        m_iconEdit = new QComboBox(iconWidget);
++        m_iconEdit = new IconComboBox(iconWidget);
+         m_iconEdit->setEditable(true);
+         m_iconEdit->setInsertPolicy(QComboBox::NoInsert);
+         m_iconEdit->setIconSize(QSize(20, 20));
+         m_iconEdit->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+-        m_iconEdit->addItem(themedIcon(QStringLiteral("system-run")), QStringLiteral("system-run"));
+-        for (const QString &name : availableIconNames()) {
+-            if (name != QStringLiteral("system-run")) {
+-                m_iconEdit->addItem(themedIcon(name), name);
+-            }
++        const QStringList commonIcons {
++            QStringLiteral("system-run"),
++            QStringLiteral("user-trash"),
++            QStringLiteral("folder"),
++            QStringLiteral("folder-download"),
++            QStringLiteral("edit-clear"),
++            QStringLiteral("document-open"),
++            QStringLiteral("application-x-executable"),
++            QStringLiteral("utilities-terminal"),
++            QStringLiteral("preferences-system"),
++            QStringLiteral("search-symbolic")
++        };
++        for (const QString &name : commonIcons) {
++            m_iconEdit->addItem(themedIcon(name), name);
+         }
+         m_iconEdit->setMaxVisibleItems(18);
+         iconLayout->addWidget(m_iconPreview);
+-- 
+2.43.0
+

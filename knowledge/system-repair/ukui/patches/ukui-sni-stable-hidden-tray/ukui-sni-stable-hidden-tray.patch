@@ -1,0 +1,54 @@
+diff --git a/ukui-system-tray/plugin/item-group-model.cpp b/ukui-system-tray/plugin/item-group-model.cpp
+index 987f86a..13edc6e 100644
+--- a/ukui-system-tray/plugin/item-group-model.cpp
++++ b/ukui-system-tray/plugin/item-group-model.cpp
+@@ -111,10 +111,17 @@ int ItemGroupModel::groupEnd() const
+ 
+ bool ItemGroupModel::filterAcceptsRow(int source_row, const QModelIndex &source_parent) const
+ {
++    const QModelIndex sourceIndex = sourceModel()->index(source_row, 0, source_parent);
++    int order = sourceIndex.data(TrayItemsModel::ConfigOrder).toInt();
++
++    if (order < 0) {
++        order = source_row;
++    }
++
+     if (m_groupType == GroupType::Show) {
+-        return source_row >= 0 && source_row <= m_currentSeparateIndex;
++        return order >= 0 && order <= m_currentSeparateIndex;
+     } else if (m_groupType == GroupType::Fold) {
+-        return source_row > m_currentSeparateIndex && source_row <= (m_sourceModel->rowCount(QModelIndex()) - 1);
++        return order > m_currentSeparateIndex && source_row <= (m_sourceModel->rowCount(QModelIndex()) - 1);
+     }
+     return true;
+ }
+@@ -145,4 +152,3 @@ void ItemGroupModel::onSeparateIndexChanged()
+                 m_showCount : m_sourceModel->getSeparateIndex());
+     Q_EMIT currentSeparateIndexChanged();
+ }
+-
+diff --git a/ukui-system-tray/plugin/tray-items-model.cpp b/ukui-system-tray/plugin/tray-items-model.cpp
+index 412a893..d90415e 100644
+--- a/ukui-system-tray/plugin/tray-items-model.cpp
++++ b/ukui-system-tray/plugin/tray-items-model.cpp
+@@ -220,6 +220,8 @@ QVariant TrayItemsModel::data(const QModelIndex &index, int role) const
+             return item->fixed();
+         case Role::RecordOrder:
+             return item->recordOrder();
++        case Role::ConfigOrder:
++            return m_orderList.indexOf(item->id());
+         case Role::Row:
+             return index.row();
+         case Role::Desktop:
+diff --git a/ukui-system-tray/plugin/tray-items-model.h b/ukui-system-tray/plugin/tray-items-model.h
+index 691d801..2e03989 100644
+--- a/ukui-system-tray/plugin/tray-items-model.h
++++ b/ukui-system-tray/plugin/tray-items-model.h
+@@ -40,6 +40,7 @@ public:
+         WindowId,
+         Fixed,
+         RecordOrder,
++        ConfigOrder,
+         Row,
+         Desktop
+     };

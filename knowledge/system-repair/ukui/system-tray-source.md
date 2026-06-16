@@ -1,5 +1,7 @@
 # UKUI 系统托盘源码级修改
 
+可复用 patch 集保存在 [`patches/ukui-sni-stable-hidden-tray/PATCHSET.md`](patches/ukui-sni-stable-hidden-tray/PATCHSET.md)。只有需要把该修复套到当前系统源码包时才读取 patch 集；读取前先确认当前系统包版本和匹配源码节点。
+
 ## 适用场景
 
 - `systemTray.json` 已正确保存 `orderedItems` 和 `separateIndex`，但主显示区应用退出后，折叠/隐藏区图标会自动补位到主托盘。
@@ -137,4 +139,3 @@ pkill -x ukui-panel
 dpkg -V ukui-widget-system-tray || true
 pgrep -a ukui-panel || true
 ```
-

@@ -111,7 +111,7 @@ kylinos-desktop-v11-skill/
 └── README.en.md
 ```
 
-`references/` is the scenario routing layer. Each reference contains scope, a short explanation, a knowledge entry, and minimal diagnostics. `knowledge/<type>/<scenario>/README.md` is the scenario index that routes to one concrete chapter. The concrete `<topic>.md` files contain background, diagnosis, repair or enhancement steps, verification, rollback, and cleanup notes.
+`references/` is the scenario routing layer. Each reference contains scope, a short explanation, a knowledge entry, and minimal diagnostics. `knowledge/<type>/<scenario>/README.md` is the scenario index that routes to one concrete chapter. The concrete `<topic>.md` files contain background, diagnosis, repair or enhancement steps, verification, rollback, and cleanup notes. Reusable source-level features also keep patch sets and `PATCHSET.md` metadata under the same scenario's `patches/<feature-id>/` directory.
 
 Fixed loading path:
 
@@ -177,6 +177,7 @@ SKILL.md
 - UKUI global-search search-engine customization.
 - UKUI global-search custom command provider and graphical command configuration.
 - Local source customization workspaces, commits, patches, and build-artifact cleanup.
+- Reusable source patch sets, upstream repositories, base nodes, and conflict migration rules.
 - AI-tool global prompts, permission configuration, and multi-tool loading rules.
 - DATA partition layout for local source and build work.
 

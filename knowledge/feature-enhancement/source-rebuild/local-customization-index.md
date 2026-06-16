@@ -1,6 +1,6 @@
 # 本地源码客制化索引
 
-本文档用于记录所有“通过本地修改系统组件源码并替换系统产物解决问题”的索引规则。它不记录具体补丁细节；具体补丁仍放到对应组件或场景知识章节中，例如 `knowledge/feature-enhancement/ukui/search-web-engine.md`。
+本文档用于记录所有“通过本地修改系统组件源码并替换系统产物解决问题”的本机工作区索引规则。DATA 工作区记录当前机器的源码、构建、回滚和现场 patch；可跨机器复用的功能 patch 还必须同步放入 skill 的对应 knowledge 场景目录，例如 `knowledge/feature-enhancement/ukui/patches/<feature-id>/`。
 
 ## 适用场景
 
@@ -67,6 +67,7 @@ git -C "/data/usershare/kylinos-local-sources/<component-or-fix>/<source-tree>" 
 - 源码来源、候选 git 节点、当前工作分支、精确匹配或近似匹配依据。
 - 是否为本机客制化工作树；如果用户要求保留变更边界，可以在本地源码工作树提交 git commit，但不要 push 到上游或公开仓库。
 - 本地客制化 commit 的 hash、导出的 patch 路径，以及后续系统包版本更新时的重新套用方式。
+- 如果 patch 已沉淀到 skill，记录对应 `knowledge/<type>/<scenario>/patches/<feature-id>/PATCHSET.md` 路径。
 - 修改过的源码文件、新增资源文件、安装到系统的目标文件。
 - 构建命令、构建目录、构建依赖和构建失败后的处理记录。
 - 安装前 ABI、SONAME、NEEDED、RPATH/RUNPATH、导出符号、关键字符串验证结果。
@@ -145,6 +146,16 @@ git format-patch -1 HEAD --stdout > "/data/usershare/kylinos-local-sources/<comp
 - 记录该 patch 基于哪个源码节点、系统包版本或候选 tag 生成。
 - 记录 patch 是否已经安装到当前系统、对应回滚包路径或替代回滚方式，以及验证结果。
 - 记录后续版本更新时的合并方式，例如先切到新源码节点，再尝试 `git am <patch>`；若冲突较多，则用 `git apply --reject <patch>` 辅助人工合并，最后重新构建、做 ABI/RPATH/符号验证和试装验证。
+
+如果该 patch 实现的是可复用功能，而不是只对当前机器一次性有效的临时调试改动，还必须同步到 skill：
+
+```text
+knowledge/<system-repair|feature-enhancement>/<scenario>/patches/<feature-id>/
+├── PATCHSET.md
+└── <patch-files>
+```
+
+`PATCHSET.md` 必须写明上游仓库、基线节点、适用系统包版本、patch 顺序和冲突处理策略。后续在其他系统上使用时，必须根据现场系统包版本下载或切换到对应源码节点，再套用 patch；遇到冲突时自主分析当前源码差异并迁移补丁逻辑，不能机械覆盖或放弃。
 
 系统包或上游源码更新后，不要直接复用旧构建产物。应重新拉取或切换到新源码节点，先确认新版本是否已经包含同类功能；如果没有，再用保存的 patch 重新套用或按 patch 内容手工迁移，并重复完整的构建、安装前验证、回滚安全网准备和安装后验证流程。
 
@@ -289,11 +300,11 @@ git checkout -- <tracked-generated-files>
 
 ## 与 skill 知识库的关系
 
-本地工作区保存“当前机器上实际源码、构建和回滚状态”；skill 仓库只保存通用规则和可复用方法。不要把以下内容写入 skill：
+本地工作区保存“当前机器上实际源码、构建和回滚状态”；skill 仓库保存通用规则、可复用方法和可跨机器复用的功能 patch。不要把以下内容写入 skill：
 
 - 当前用户专属绝对路径、用户名、一次性日志。
 - 未泛化的聊天过程。
 - 只对某一次构建有效的临时文件名。
-- 未验证的本地补丁细节。
+- 未验证且不具备复用价值的本地补丁细节。
 
-如果从本地客制化中抽象出通用经验，应写到对应 `knowledge/feature-enhancement/<scenario>/<topic>.md`、`knowledge/system-repair/<scenario>/<topic>.md` 或组件场景章节，并使用 `$HOME`、`<component-or-fix>`、`<timestamp>` 等占位符。
+如果从本地客制化中抽象出通用经验，应写到对应 `knowledge/feature-enhancement/<scenario>/<topic>.md`、`knowledge/system-repair/<scenario>/<topic>.md` 或组件场景章节，并使用 `$HOME`、`<component-or-fix>`、`<timestamp>` 等占位符。功能级源码 patch 应放入对应场景的 `patches/<feature-id>/`，并通过 `PATCHSET.md` 说明上游仓库、基线节点和合入策略。
