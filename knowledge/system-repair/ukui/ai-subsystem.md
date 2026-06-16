@@ -99,6 +99,37 @@ ps -ef | rg -i 'kylin-ai|aiassistant|kyai|kytensor|recollect|kylin_ai' | rg -v r
 pkexec kill <pid...>
 ```
 
+如果 `kytensor-server` 包仍在，而 `kylin-ai-python-env` 或其 Python 环境已经被卸载，可能出现 `kytensor.service` 每几秒无限重启失败，造成系统卡顿和日志刷屏。典型日志：
+
+```text
+/bin/bash: /usr/share/kylin-ai-python-env/python-env/bin/activate: 没有那个文件或目录
+kytensor.service: Failed with result 'exit-code'
+```
+
+诊断：
+
+```bash
+systemctl status kytensor.service --no-pager
+systemctl show kytensor.service -p ActiveState -p UnitFileState -p NRestarts -p Restart -p ExecMainStatus -p Result
+journalctl -u kytensor.service -b --no-pager | tail -n 80
+dpkg -S /usr/lib/systemd/system/kytensor.service /usr/bin/kytensor 2>/dev/null || true
+```
+
+如果确认 AI 子系统已不再使用，且服务依赖的环境目录缺失，可在维护模式下停止并禁用残留服务：
+
+```bash
+pkexec systemctl disable --now kytensor.service
+pkexec systemctl daemon-reload
+```
+
+验证：
+
+```bash
+systemctl show kytensor.service -p ActiveState -p UnitFileState -p NRestarts -p Result
+systemctl --failed --no-pager
+journalctl -u kytensor.service --since '1 minute ago' --no-pager
+```
+
 ## `kylin-ai-memorymap` 文件保护箱残留
 
 卸载 AI 助手/AI 子系统后，用户目录下可能仍有 `$HOME/.box/kylin-ai-memorymap`。这通常不是普通目录，而是麒麟文件保护箱/box 机制创建的挂载点，可能由 `$HOME/.box/kylin-ai-memorymap/.data` 通过 eCryptfs 挂载到保护箱目录本身。不要直接对挂载点或 `.data` 执行 `rm -rf`。

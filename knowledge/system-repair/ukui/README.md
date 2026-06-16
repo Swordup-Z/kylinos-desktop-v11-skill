@@ -8,5 +8,6 @@
 - [system-tray.md](system-tray.md)：右侧托盘顺序、隐藏区和持久化。
 - [system-tray-source.md](system-tray-source.md)：托盘源码级修复。
 - [patches/ukui-sni-stable-hidden-tray/PATCHSET.md](patches/ukui-sni-stable-hidden-tray/PATCHSET.md)：托盘隐藏区稳定性 patch 集。只有需要在源码树中复用该修复时才读取。
+- [input-method.md](input-method.md)：Fcitx5、搜狗/讯飞输入法、输入法托盘显示和默认输入法异常。
 - [system-service-manager.md](system-service-manager.md)：桌面服务启动与 D-Bus activation。
 - [ai-subsystem.md](ai-subsystem.md)：桌面 AI 组件与残留清理。

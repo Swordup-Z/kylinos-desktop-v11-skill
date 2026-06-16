@@ -75,6 +75,30 @@ devfreq PHYT0048:00: dvfs failed with (-15) error
 
 这说明当前硬件的图形驱动在动态调频路径上失败。若该错误与卡死、黑屏、图形异常时间接近，可以先采用保守策略：把对应 GPU `devfreq` governor 固定到 `performance`，减少动态频率切换。
 
+如果用户描述的是“系统很卡、显示不流畅、打开托盘或菜单慢”，不一定会同时出现新的内核错误。也要检查 UKUI 电源管理是否在空闲低负载场景把 CPU 频率压得过低：
+
+```bash
+journalctl --since '10 minutes ago' --no-pager | rg -i 'ukui-powermanagement-service|SceneChanged|CpuMaxFreq|CpuMinFreq|setCore|policy'
+for cpu in /sys/devices/system/cpu/cpu[0-9]*/cpufreq; do
+  echo "== $cpu =="
+  cat "$cpu/scaling_governor" 2>/dev/null || true
+  cat "$cpu/scaling_min_freq" 2>/dev/null || true
+  cat "$cpu/scaling_max_freq" 2>/dev/null || true
+  cat "$cpu/cpuinfo_max_freq" 2>/dev/null || true
+done
+```
+
+若日志显示场景切到 `idle#idle_low_Load` 后，Balance 模式使用 `CpuMaxFreq=min`、`CpuMinFreqPercentage=1`，可能导致恢复交互时明显卡顿。可以在维护模式下只修正该场景，而不是全局禁用电源管理：
+
+```bash
+pkexec sed -i.bak-<date> \
+  -e 's/^idlelowloadBalanceCpuMaxFreq=min$/idlelowloadBalanceCpuMaxFreq=max/' \
+  -e 's/^idlelowloadBalanceCpuMinFreqPercentage=1$/idlelowloadBalanceCpuMinFreqPercentage=50/' \
+  /usr/share/ukui/ukui-power-manager/upm-hardware-global.conf
+```
+
+修改后重启或重新激活 `ukui-powermanagement-service`，再验证 CPU 最低/最高频率。注意：设置界面显示的电源模式仍可能是“平衡”档；它表示高层策略档位，不等于底层 CPU/GPU governor 必须是省电策略。
+
 先确认设备节点和可用 governor：
 
 ```bash
