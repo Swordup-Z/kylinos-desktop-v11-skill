@@ -167,7 +167,7 @@ SKILL.md
 - Maintenance mode, the PanShi architecture, and system-level modification boundaries.
 - Application installation, AppImage, third-party apt sources, and KARE/Kaiming isolation.
 - Clash Verge TUN, `/dev/net/tun`, proxy services, and proxy core paths.
-- UKUI autostart, global-search issues, shortcuts, system tray, input methods, panel/taskbar behavior.
+- UKUI autostart, global-search issues, shortcuts, system tray, input methods, panel/taskbar behavior, and open-with file-dialog behavior.
 - Desktop AI components, AI subsystem cleanup, and residues.
 - Fingerprint/biometric authentication, graphics frequency, and hardware stability.
 - Root partition, DATA partition, `/home` mount location, overlay views, and disk usage.

@@ -1,0 +1,54 @@
+From 6b964c54212b6ee4a714d06d5401ac4feef7965a Mon Sep 17 00:00:00 2001
+From: zengjianqi <zengjianqi@kylinos.cn>
+Date: Tue, 16 Jun 2026 16:16:17 +0800
+Subject: [PATCH] Fix desktop application file dialog filtering
+
+---
+ qt5-ukui-filedialog/kyfiledialog.cpp | 18 +++++++++++++++---
+ 1 file changed, 15 insertions(+), 3 deletions(-)
+
+diff --git a/qt5-ukui-filedialog/kyfiledialog.cpp b/qt5-ukui-filedialog/kyfiledialog.cpp
+index a0eb898..1001283 100644
+--- a/qt5-ukui-filedialog/kyfiledialog.cpp
++++ b/qt5-ukui-filedialog/kyfiledialog.cpp
+@@ -883,7 +883,9 @@ void KyNativeFileDialog::goToUri(const QString &uri, bool addToHistory, bool for
+         if(gUri.startsWith("search:///search_uris="))
+             getCurrentPage()->goToUri(gUri, addToHistory, forceUpdate);
+         else
+-        getCurrentPage()->goToUri(Peony::FileUtils::urlEncode(gUri), addToHistory, forceUpdate);
++            getCurrentPage()->goToUri(Peony::FileUtils::urlEncode(gUri), addToHistory, forceUpdate);
++
++        selectNameFilterCurrentIndex(mKyFileDialogUi->m_fileTypeCombo->currentIndex());
+     }
+ }
+ 
+@@ -1143,14 +1145,24 @@ void KyNativeFileDialog::selectNameFilterCurrentIndex(int index)
+ 
+     pDebug << "selectNameFilterCurrentIndex filterList:" << filterList;
+     QStringList mimeTypeFilterList;
++    QStringList effectiveFilterList = filterList;
++
++    QString currentPath = getCurrentUri();
++    if (currentPath.startsWith("file://")) {
++        currentPath = QUrl(currentPath).toLocalFile();
++    }
++    if (QDir::cleanPath(currentPath) == "/usr/share/applications" &&
++            filterList.contains("*.desktop", Qt::CaseInsensitive)) {
++        effectiveFilterList.clear();
++    }
+ 
+     pDebug << "selectNameFilterCurrentIndex filemode.....:" << fileMode();
+     if(fileMode() == QFileDialog::Directory || fileMode() == QFileDialog::DirectoryOnly)
+     {
+-        getCurrentPage()->addFileDialogFiltersCondition(mimeTypeFilterList, filterList, QDir::Dirs, Qt::CaseInsensitive);
++        getCurrentPage()->addFileDialogFiltersCondition(mimeTypeFilterList, effectiveFilterList, QDir::Dirs, Qt::CaseInsensitive);
+     }
+     else
+-        getCurrentPage()->addFileDialogFiltersCondition(mimeTypeFilterList, filterList, filter(), Qt::CaseInsensitive);
++        getCurrentPage()->addFileDialogFiltersCondition(mimeTypeFilterList, effectiveFilterList, filter(), Qt::CaseInsensitive);
+     pDebug << "addFileDialogFiltersCondition 0000000000000" << getCurrentSelections().length();
+     if(m_fileDialogHelper->isViewInitialFinished()){
+         refreshContainerSort();
+-- 
+2.43.0
+

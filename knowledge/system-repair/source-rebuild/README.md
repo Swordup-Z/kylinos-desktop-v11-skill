@@ -9,3 +9,4 @@
 与具体修复相关的源码章节放在对应场景下，例如：
 
 - [`../ukui/system-tray-source.md`](../ukui/system-tray-source.md)
+- [`../ukui/file-dialog-open-with.md`](../ukui/file-dialog-open-with.md)
