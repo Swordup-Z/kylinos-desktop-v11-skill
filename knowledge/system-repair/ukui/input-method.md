@@ -7,6 +7,7 @@
 - 右下角输入法图标还在，但显示成键盘或英文图标，点击后打不开输入法菜单。
 - `ps` 显示有 `fcitx5`，但 `/proc/<pid>/exe` 指向 `/usr/bin/fcitx5 (deleted)`。
 - `dpkg -l` 显示 `fcitx5` 为 `rc`，而 `fcitx5-data`、`fcitx5-modules` 等依赖包仍为 `ii`。
+- 安装第三方客户端失败后，`fcitx5` 主包被卸载，系统安装了 `fcitx-bin`、`fcitx-data` 等 Fcitx4 包，导致托盘只能显示部分输入法状态。
 - 用户希望使用 fcitx5 版搜狗输入法，但 profile 仍默认指向讯飞或其他输入法。
 
 ## 诊断
@@ -59,6 +60,25 @@ dpkg -l | rg -i '^(ii|rc)\s+(fcitx5|fcitx|com.sogou.ime.ng.fcitx5.kylin)\b'
 ```
 
 `fcitx` 或旧输入法包显示 `rc` 通常表示只剩配置文件，不代表仍在运行。不要仅因 `rc` 状态就盲目清理；先确认当前用户实际需要的输入法。
+
+如果问题出现在第三方客户端安装失败之后，先检查是否被依赖解析替换成 Fcitx4：
+
+```bash
+dpkg -l | rg -i '^(ii|iU|iF|rc)\s+(fcitx5$|fcitx-bin|fcitx-data|com.sogou.ime.ng.fcitx5.kylin)\b'
+readlink -f /proc/<fcitx5-pid>/exe 2>/dev/null || true
+apt-get -s install fcitx5
+```
+
+如果模拟结果只会卸载 `fcitx-bin`、`fcitx-data` 并恢复 `fcitx5`，且不会卸载当前需要的输入法包，可以执行：
+
+```bash
+pkexec apt-get install -y fcitx5
+fcitx5-remote -e 2>/dev/null || true
+pkill -x fcitx5 2>/dev/null || true
+fcitx5 -d
+```
+
+随后用 `fcitx5-remote -n`、`busctl --user` 的托盘项和 `dpkg --audit` 验证。不要因为 apt 提示旧 Fcitx4 相关包可 `autoremove` 就立即清理；先确认输入法、托盘和用户词库行为恢复正常。
 
 ## 切换默认输入法
 
