@@ -76,6 +76,7 @@ $HOME/.config/org.ukui/ukui-search/custom-commands.json
 - 路径参数优先写成 `$HOME/下载`、`~/Documents` 这类形式，不要硬编码 `/home/<user>/...`。
 - 每个参数仍然是数组中的一个元素；不要写成一整段 shell 字符串。
 - 需要打开目录这类动作时，可配置为 `command=xdg-open`、`args=["$HOME/下载"]`、`detached=true`。
+- 需要配置关机、重启等系统动作时，可使用 `command=systemctl`、`args=["poweroff"]` 或 `args=["reboot"]`，并设置 `confirm=true`。关键词应同时包含中文、拼音和英文别名，例如“关机/guanji/shutdown/poweroff”和“重启/chongqi/reboot/restart”。
 - 如果已经实现设置页图形化入口，该入口保存时应使用缩进后的 JSON，保留未知顶层字段，并只更新 `commands` 数组；这样既方便人工审阅，也避免破坏未来扩展字段。
 
 ## 最小源码修改位置
