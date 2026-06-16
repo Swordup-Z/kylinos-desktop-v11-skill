@@ -6,6 +6,7 @@
 
 - Peony 或桌面右键文件，选择“打开方式 -> 选择其他应用”。
 - 弹出的 UKUI 原生文件选择器进入 `/usr/share/applications` 后，只显示极少数 `.desktop` 文件，真实应用不可见。
+- 弹出的 UKUI 原生文件选择器点击快速访问里的“桌面”后，地址栏显示桌面位置，但桌面上的 `.desktop` 图标不可见。
 - 应用列表恢复后如果仍没有图标，先重启相关 Peony/文件选择器进程并验证图标主题；不要直接替换 `libpeony`。
 
 ## 组件定位
@@ -17,6 +18,9 @@ dpkg-query -W -f='${binary:Package} ${Version} ${Source}\n' qt5-ukui-platformthe
 dpkg -S /usr/lib/aarch64-linux-gnu/qt5/plugins/platformthemes/libqt5-ukui-filedialog.so
 zcat /usr/share/doc/qt5-ukui-platformtheme/changelog.Debian.gz | sed -n '1,120p'
 find /usr/share/applications -maxdepth 1 -name '*.desktop' | head
+xdg-user-dir DESKTOP
+find "$(xdg-user-dir DESKTOP)" -maxdepth 1 -name '*.desktop' | head
+sed -n '1,80p' "$HOME/.config/QtProject.conf" 2>/dev/null || true
 ```
 
 常见目标：
@@ -37,17 +41,21 @@ git clone https://gitee.com/openkylin/qt5-ukui-platformtheme.git
 
 ## 根因判断
 
-UKUI 原生文件选择器把 `Desktop files (*.desktop)` 之类的名称过滤传给 Peony 页面模型。Peony 在 `/usr/share/applications` 下显示的是桌面文件的本地化应用名，而不是原始文件名，所以 `*.desktop` 无法匹配真实应用的显示名，导致列表看起来像只剩个别服务类 desktop 文件。
+UKUI 原生文件选择器把 `Desktop files (*.desktop)` 之类的名称过滤传给 Peony 页面模型。Peony 在 `/usr/share/applications` 和用户 XDG Desktop 目录下显示的是桌面文件的本地化应用名，而不是原始文件名，所以 `*.desktop` 无法匹配真实应用的显示名，导致真实应用条目被隐藏。
 
 另一个触发点是文件类型过滤可能早于最终目录切换完成。即使修复了过滤规则，也要在 `goToUri()` 完成目录切换后重新应用当前文件类型过滤，否则对话框仍可能保留旧目录或旧模型状态下的过滤结果。
 
+如果用户把 XDG 用户目录从中文名切换到英文名，地址栏仍显示“桌面”不一定表示真实路径仍是中文目录；中文界面可能会把 `Desktop` 本地化显示为“桌面”。真实路径以 `xdg-user-dir DESKTOP` 为准。改动 XDG 用户目录后，需要重启 Peony/文件选择器相关进程，否则 `QStandardPaths::DesktopLocation` 可能仍在旧进程内保留旧值。
+
+`$HOME/.config/QtProject.conf` 的 `[FileDialog] shortcuts` 可能只缓存了 `file:` 和 `$HOME`。这会让 Qt 文件选择器快速访问更容易落到家目录；可在不影响 XDG 配置的前提下把 `file://$HOME/Desktop` 或当前 `xdg-user-dir DESKTOP` 对应 URI 加入 shortcuts，作为用户级缓存修复。
+
 ## 最小补丁思路
 
-优先只处理 `/usr/share/applications` 下的 `.desktop` 选择场景，避免影响普通文件选择器行为：
+优先只处理 `/usr/share/applications` 和当前用户 XDG Desktop 目录下的 `.desktop` 选择场景，避免影响普通文件选择器行为：
 
 1. 在 `KyNativeFileDialog::goToUri()` 完成页面目录切换后，重新调用当前文件类型过滤逻辑。
 2. 在 `KyNativeFileDialog::selectNameFilterCurrentIndex()` 中取得当前目录。
-3. 如果当前目录规范化后等于 `/usr/share/applications`，且过滤列表包含 `*.desktop`，则只对传给 Peony 的实际名称过滤列表清空。
+3. 如果当前目录规范化后等于 `/usr/share/applications` 或 `QStandardPaths::DesktopLocation`，且过滤列表包含 `*.desktop`，则只对传给 Peony 的实际名称过滤列表清空。
 4. 其他目录、mime 过滤、目录选择模式和普通文件选择保持原逻辑。
 
 不要把 `/usr/share/applications` 下所有图标问题都归因于本补丁。如果应用条目已经可见但图标为空，应先验证：
@@ -62,6 +70,7 @@ gtk-update-icon-cache -q /usr/share/icons/<theme> 2>/dev/null || true
 ```bash
 pgrep -af '[p]eony|[u]kui-panel'
 kill <peony-qt-desktop-pid>
+kill <peony-pid>
 ```
 
 `peony-qt-desktop` 通常会被会话管理器自动拉起。重启后重新打开“打开方式 -> 更多应用 -> 选择其他应用”，确认应用列表和图标是否同时可见。
@@ -135,8 +144,9 @@ comm -3 /tmp/system.symbols /tmp/new.symbols
 
 1. 对话框进入 `/usr/share/applications`。
 2. 真实应用条目可见，不再只显示少数服务类 `.desktop`。
-3. 应用图标能正常显示；若图标为空，先重启 Peony/文件选择器进程并检查桌面文件 `Icon=` 与图标主题。
-4. `journalctl --user --since '2 minutes ago' --no-pager` 中没有新的 `qt5-ukui-filedialog`、Peony 或 Qt 平台主题崩溃日志。
+3. 对话框进入快速访问里的“桌面”或当前 `xdg-user-dir DESKTOP` 目录，桌面 `.desktop` 图标可见。
+4. 应用图标能正常显示；若图标为空，先重启 Peony/文件选择器进程并检查桌面文件 `Icon=` 与图标主题。
+5. `journalctl --user --since '2 minutes ago' --no-pager` 中没有新的 `qt5-ukui-filedialog`、Peony 或 Qt 平台主题崩溃日志。
 
 ## 回滚
 

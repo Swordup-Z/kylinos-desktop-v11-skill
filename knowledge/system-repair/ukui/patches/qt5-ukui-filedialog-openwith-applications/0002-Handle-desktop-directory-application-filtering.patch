@@ -1,0 +1,27 @@
+From cb76ea689d3eafa33abeb37dafb52cbb38489eea Mon Sep 17 00:00:00 2001
+From: zengjianqi <zengjianqi@kylinos.cn>
+Date: Tue, 16 Jun 2026 17:43:49 +0800
+Subject: [PATCH] Handle desktop directory application filtering
+
+---
+ qt5-ukui-filedialog/kyfiledialog.cpp | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/qt5-ukui-filedialog/kyfiledialog.cpp b/qt5-ukui-filedialog/kyfiledialog.cpp
+index 1001283..fa1c088 100644
+--- a/qt5-ukui-filedialog/kyfiledialog.cpp
++++ b/qt5-ukui-filedialog/kyfiledialog.cpp
+@@ -1151,7 +1151,9 @@ void KyNativeFileDialog::selectNameFilterCurrentIndex(int index)
+     if (currentPath.startsWith("file://")) {
+         currentPath = QUrl(currentPath).toLocalFile();
+     }
+-    if (QDir::cleanPath(currentPath) == "/usr/share/applications" &&
++    const QString cleanCurrentPath = QDir::cleanPath(currentPath);
++    const QString desktopPath = QDir::cleanPath(QStandardPaths::writableLocation(QStandardPaths::DesktopLocation));
++    if ((cleanCurrentPath == "/usr/share/applications" || cleanCurrentPath == desktopPath) &&
+             filterList.contains("*.desktop", Qt::CaseInsensitive)) {
+         effectiveFilterList.clear();
+     }
+-- 
+2.43.0
+
