@@ -20,12 +20,53 @@ mm-cli -s
 dpkg -l | rg -i 'atrust|sangfor|uem' || true
 systemctl status aTrustDaemon.service --no-pager 2>/dev/null || true
 systemctl status uem_service.service --no-pager 2>/dev/null || true
+systemctl is-enabled uem_service.service 2>/dev/null || true
+systemctl is-active uem_service.service 2>/dev/null || true
 lsmod | rg -i 'sfuem|sangfor|uem' || true
 find /lib/modules /usr/lib/modules -name 'sfuem.ko*' 2>/dev/null
+find /dev -maxdepth 2 \( -iname '*uem*' -o -iname '*sfuem*' \) -ls 2>/dev/null
 rg -n 'sfuem|uem_service' /etc/modules-load.d /usr/lib/modules-load.d /lib/modules-load.d /etc/modprobe.d /usr/lib/modprobe.d 2>/dev/null || true
 ```
 
 如果用户报告启动异常，应先确认模块是否仍在磁盘、DKMS 或自加载配置中；不要先重装客户端。
+
+## UEM RPC 与驱动设备诊断
+
+如果用户态日志出现 `connect() failed: 拒绝连接`、`onRpcUserLogin failed` 或 `onRpcConfChange failed`，先区分是 `uem_service` 没运行，还是 UEM 驱动缺失：
+
+```bash
+tail -n 120 "$HOME/.aTrust/logs/uem/uemsdk.log" "$HOME/.aTrust/logs/uem/uem_launcher.log" 2>/dev/null
+sudo tail -n 160 /root/.aTrust/logs/uem/uem_service.log /root/.aTrust/logs/uem/uem_installer.log 2>/dev/null
+systemctl is-enabled uem_service.service 2>/dev/null || true
+systemctl is-active uem_service.service 2>/dev/null || true
+find /dev -maxdepth 2 \( -iname '*uem*' -o -iname '*sfuem*' \) -ls 2>/dev/null
+strings -a /usr/share/sangfor/aTrust/uem/bin/uem_service 2>/dev/null | rg '/dev/|sfuem|driver init|Open uem'
+```
+
+判断：
+
+- `uem_service` 为 `masked/inactive` 且 `uemsdk.log` 报 RPC 拒绝连接，说明客户端确实连不上 UEM 服务；这通常是为了避免不兼容内核模块开机加载而主动屏蔽后的结果。
+- 临时解除屏蔽并启动 `uem_service` 后，如果 `/root/.aTrust/logs/uem/uem_service.log` 报 `Uem driver ctrl init failed.; Reason: Open uem device failed.` 或 `driver init failed`，同时没有 `/dev/sfuem`，说明 UEM 服务依赖的厂商驱动设备不存在。
+- aTrust 的普通隧道进程、`/dev/net/tun` 或 `utun*` 存在，不代表 UEM 虚拟网络环境可用；UEM 虚拟网络依赖的是 `/dev/sfuem` 这条独立链路。
+
+低风险验证只能做到“临时启动用户态服务观察日志”，不要启用开机自启：
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl unmask uem_service.service
+sudo systemctl start uem_service.service
+systemctl status uem_service.service --no-pager
+```
+
+验证结束后，如果日志确认缺 `/dev/sfuem` 或服务反复退出，应恢复安全状态：
+
+```bash
+sudo systemctl stop uem_service.service 2>/dev/null || true
+sudo systemctl mask uem_service.service 2>/dev/null || true
+sudo systemctl reset-failed uem_service.service 2>/dev/null || true
+```
+
+如果当前安装包只包含 DKMS 构建脚本、`modules-load.d/sfuem.conf`，但没有官方预编译 `.ko` 或明确支持当前内核版本的驱动包，应判定为厂商驱动兼容性问题；不要继续伪造兼容对象或用自编模块硬适配。
 
 ## 回滚内核侧残留
 
@@ -35,6 +76,7 @@ rg -n 'sfuem|uem_service' /etc/modules-load.d /usr/lib/modules-load.d /lib/modul
 sudo systemctl disable --now uem_service.service 2>/dev/null || true
 sudo systemctl mask uem_service.service 2>/dev/null || true
 sudo dkms remove sfuem/1.0.0 --all 2>/dev/null || true
+sudo dkms remove sfuem.disabled/1.0.0 --all 2>/dev/null || true
 sudo find /lib/modules /usr/lib/modules -name 'sfuem.ko*' -delete
 sudo rm -f /etc/modules-load.d/*sfuem* /usr/lib/modules-load.d/*sfuem* /lib/modules-load.d/*sfuem*
 sudo depmod -a
@@ -45,12 +87,13 @@ sudo depmod -a
 ```bash
 lsmod | rg -i 'sfuem|uem' || true
 find /lib/modules /usr/lib/modules -name 'sfuem.ko*' 2>/dev/null
+dkms status 2>/dev/null | rg -i 'sfuem|uem' || true
 systemctl is-enabled uem_service.service 2>/dev/null || true
 systemctl is-active uem_service.service 2>/dev/null || true
 systemctl is-active aTrustDaemon.service 2>/dev/null || true
 ```
 
-期望状态：`sfuem` 不在 `lsmod`，磁盘无 `sfuem.ko*`，`uem_service` 为 `masked` 或 `disabled/inactive`，`aTrustDaemon` 可继续保持 `active` 便于后续排查。
+期望状态：`sfuem` 不在 `lsmod`，磁盘无 `sfuem.ko*`，DKMS 无 `sfuem` 或 `sfuem.disabled` 残留，`uem_service` 为 `masked` 或 `disabled/inactive`，`aTrustDaemon` 可继续保持 `active` 便于后续排查。
 
 ## 临时脚本清理
 
