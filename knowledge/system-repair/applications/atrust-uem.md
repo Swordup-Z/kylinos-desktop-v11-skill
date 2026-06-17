@@ -105,6 +105,62 @@ find "$HOME" -maxdepth 1 -type f \( -name '*atrust*' -o -name '*aTrust*' -o -nam
 
 只删除能确认属于本次临时修复链路的文件；不要按扩展名批量删除用户自己的脚本。
 
+## 不可用时卸载清理
+
+如果确认当前 aTrust/UEM 版本不兼容当前系统或内核，并且用户要求卸载清理，仍按维护模式执行。先停服务和进程，再通过包管理器卸载，最后做残留扫描。不要直接从 `/usr/share`、`/opt/apps` 开始手工删除，否则容易让 dpkg 数据库保留脏状态。
+
+```bash
+mm-cli -s
+dpkg -l | rg -i 'atrust|sangfor|uem|sfuem' || true
+systemctl list-unit-files | rg -i 'atrust|sangfor|uem|eaio' || true
+ps -ef | rg -i 'atrust|sangfor|uem|eaio|sfuem' | rg -v rg || true
+```
+
+卸载：
+
+```bash
+sudo systemctl stop aTrustDaemon.service aTrustShell.service eaio_service.service uem_service.service 2>/dev/null || true
+sudo systemctl disable aTrustDaemon.service aTrustShell.service aTrustTray@.service eaio_service.service uem_service.service 2>/dev/null || true
+sudo apt-get purge -y cn.com.sangfor.atrust
+```
+
+aTrust 卸载脚本可能输出 `kill` 用法、找不到 UEM 插件文件、`Failed to connect to bus` 或“保留 root 日志目录”等非致命信息。只要 dpkg 最终不再显示 `cn.com.sangfor.atrust`，再继续清理残留：
+
+```bash
+sudo rm -rf \
+  /etc/systemd/system/uem_service.service \
+  /usr/share/glib-2.0/schemas/99_cn.com.sangfor.atrust.uem.gschema.override \
+  /usr/share/kylin-software-center/data/icons/cn.com.sangfor.atrust.png \
+  /usr/share/sangfor \
+  /var/log/sangfor \
+  /root/.aTrust \
+  /opt/apps/cn.com.sangfor.atrust
+sudo find /lib/modules /usr/lib/modules -name 'sfuem.ko*' -delete 2>/dev/null || true
+sudo rm -f /etc/modules-load.d/*sfuem* /usr/lib/modules-load.d/*sfuem* /lib/modules-load.d/*sfuem* 2>/dev/null || true
+sudo rm -rf /usr/src/sfuem-* /var/lib/dkms/sfuem /var/lib/dkms/sfuem.disabled 2>/dev/null || true
+sudo rm -rf /var/tmp/aTrustShell.conf /var/tmp/com.sangfor.aTrustTray.script.start.log /var/tmp/com.sangfor.atrust /var/tmp/sapp2_aTrustXtunnel-64*
+sudo depmod -a
+sudo glib-compile-schemas /usr/share/glib-2.0/schemas/ 2>/dev/null || true
+sudo systemctl daemon-reload
+sudo systemctl reset-failed aTrustDaemon.service aTrustShell.service aTrustTray@.service eaio_service.service uem_service.service 2>/dev/null || true
+rm -rf "$HOME/.aTrust" "$HOME/.config/aTrustTray"
+systemctl --user daemon-reload 2>/dev/null || true
+systemctl --user reset-failed aTrustShell.service aTrustTray.service uem_shell@.service 2>/dev/null || true
+```
+
+验证：
+
+```bash
+dpkg -l | rg -i 'atrust|sangfor|sfuem' || true
+systemctl list-unit-files | rg -i 'atrust|sangfor|uem|eaio' || true
+systemctl --user list-unit-files | rg -i 'atrust|sangfor|uem|eaio' || true
+ps -ef | rg -i 'atrust|sangfor|uem|eaio|sfuem' | rg -v rg || true
+lsmod | rg -i 'sfuem|sangfor|uem' || true
+dkms status 2>/dev/null | rg -i 'sfuem|atrust|uem' || true
+```
+
+不要把 `apt autoremove` 作为 aTrust 卸载的一部分自动执行；它可能列出输入法或其他桌面组件的历史依赖，应由用户单独确认。`$HOME/下载` 中用户手动保存的安装包、表格或归档也不要默认删除，除非用户明确要求一并清理。
+
 ## 后续排查方向
 
 - 优先查找官方支持当前系统和内核版本的 aTrust 包、UEM 组件或虚拟网络组件。
