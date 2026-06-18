@@ -1,6 +1,8 @@
 # 系统功能增强：应用体验
 
-当前应用体验增强没有独立细分章节。只有当增强需求实际依赖安装、桌面入口或隔离边界时，才读取对应修复知识：
+应用体验增强优先读取独立细分章节；如果增强需求实际依赖安装、桌面入口或隔离边界，再选择对应修复知识：
+
+- [`qt-ukui-layout.md`](qt-ukui-layout.md)
 
 - [`../../system-repair/applications/host-package-install.md`](../../system-repair/applications/host-package-install.md)
 - [`../../system-repair/applications/appimage.md`](../../system-repair/applications/appimage.md)
