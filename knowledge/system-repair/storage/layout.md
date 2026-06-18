@@ -93,7 +93,7 @@ find /var/opt/kaiming/layers/stable -mindepth 5 -maxdepth 5 -type d -printf '%p\
 - 旧版本容器候选必须确认不属于当前 info 清单、没有被 mount 或进程使用；优先移动到 DATA 分区隔离目录，而不是直接删除。
 - 对自动启动或预热造成的持续占用，可优先在用户级 `.config/autostart` 写入 `Hidden=true` 覆盖，而不是删除系统级 `.desktop`。
 
-Kaiming/KARE/ostree 空间治理适合做成独立工具。推荐工具形态是“桌面 GUI + 可审计 helper”：GUI 负责扫描、展示和触发授权，helper 负责 dry-run、维护模式检查、旧容器识别和回滚隔离。原型可用脚本快速验证规则；长期桌面应用更适合用 C++/Qt 实现界面和本地扫描逻辑，并用小型 C++ Polkit helper 承担提权动作。工具必须默认只报告，不应自动清理。
+Kaiming/KARE/ostree 空间治理适合做成独立工具。推荐工具形态是“桌面 GUI + 可审计 helper”：GUI 负责扫描、展示和触发授权，helper 负责 dry-run、维护模式检查、旧容器识别和回滚隔离。原型可用脚本快速验证规则；长期桌面应用更适合用 C++/Qt 实现界面和本地扫描逻辑，并用小型 C++ Polkit helper 承担提权动作。工具必须默认只报告，不应自动清理。任何“禁用自启动”“清理旧容器”等会改变系统或用户会话行为的按钮，都应先弹出候选项选择和执行计划；主界面下方应展示“将做什么、正在做什么、结果如何”，原始日志只放在可展开详情里，不能让按钮直接静默执行。
 
 ostree 部署、`/boot`、EFI、GRUB、loader entries、`/etc/fstab` 和分区表不属于普通空间清理对象。即使 `/sysroot/ostree/deploy` 看起来很大，也不能据此删除 deployment 或 boot 文件；应先确认当前 `root=UUID`、`ostree=`、loader entry、EFI 启动路径和双 SYSROOT/SYSBOOT 分区状态。
 
