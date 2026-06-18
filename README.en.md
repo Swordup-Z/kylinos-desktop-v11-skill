@@ -235,7 +235,7 @@ SKILL.md
 - UKUI autostart, global-search issues, shortcuts, system tray, input methods, panel/taskbar behavior, and open-with file-dialog behavior.
 - Desktop AI components, AI subsystem cleanup, and residues.
 - Fingerprint/biometric authentication, graphics frequency, and hardware stability.
-- Root partition, DATA partition, `/home` mount location, overlay views, and disk usage.
+- Root partition, DATA partition, `/home` mount location, overlay views, Kaiming/KARE, and ostree disk-usage analysis.
 
 ### Feature Enhancement
 
@@ -268,6 +268,16 @@ sudo mm-cli -c -a
 ```
 
 Switching maintenance mode usually requires a reboot. Detailed operational rules live in `SKILL.md` and the relevant reference/knowledge chapters.
+
+## Companion Tools
+
+Space cleanup, Kaiming/KARE layer control, and ostree usage auditing should live in a companion application instead of large embedded scripts inside knowledge files. The recommended local companion app is **Kylin Space Guard**:
+
+```text
+$HOME/kylin-space-guard
+```
+
+It should keep a "GUI + auditable CLI helper" structure: the GUI displays scan results, lets the user choose actions, and triggers Polkit authorization; the helper owns dry-run mode, maintenance-mode checks, official `kaiming` uninstall calls, orphan-layer quarantine, and periodic reports. The tool must not automatically delete ostree deployments, EFI files, GRUB config, loader entries, `/etc/fstab`, or partition tables.
 
 ## License
 

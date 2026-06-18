@@ -236,7 +236,7 @@ SKILL.md
 - UKUI 开机自启动、全局搜索异常、快捷键、系统托盘、输入法、面板/任务栏、打开方式文件选择器。
 - 桌面 AI 组件、AI 子系统和残留清理。
 - 指纹/生物识别、图形频率、硬件稳定性。
-- 根分区、DATA 分区、`/home` 挂载、overlay、空间占用。
+- 根分区、DATA 分区、`/home` 挂载、overlay、Kaiming/KARE 和 ostree 空间占用判断。
 
 ### 系统功能增强
 
@@ -269,6 +269,16 @@ sudo mm-cli -c -a
 ```
 
 切换维护模式后通常需要重启。具体操作流程以 `SKILL.md` 和对应 reference/knowledge 章节为准。
+
+## 独立工具
+
+空间清理、Kaiming/KARE 应用层治理、ostree 占用审计这类任务建议使用独立应用承载，而不是把大段脚本直接塞进 knowledge。当前推荐形态是独立桌面应用 **Kylin Space Guard**：
+
+```text
+$HOME/kylin-space-guard
+```
+
+它应保持“GUI + 可审计 CLI helper”的结构：GUI 负责扫描结果展示、动作选择和 Polkit 授权；CLI helper 负责 dry-run、维护模式检查、官方 `kaiming` 卸载、孤儿层隔离和定期报告。工具不得自动删除 ostree deployment、EFI、GRUB、loader entries、`/etc/fstab` 或分区表。
 
 ## License
 
