@@ -6,6 +6,7 @@
 
 - 前置条件
 - 诊断
+- 脚本化清理
 - 安全卸载边界
 - 残留清理
 - `kylin-ai-memorymap` 文件保护箱残留
@@ -76,7 +77,52 @@ apt-get -s purge kyai-data-management-service kylin-ai-document-qa-service kylin
 pkexec apt-get purge -y kyai-data-management-service kylin-ai-document-qa-service kylin-ai-document-service kylin-ai-vector-engine kylin-ai-subsystem-plugin kylin-ai-subsystem-modelconfig kylin-ai-abstract-models kylin-ai-engine-plugins kylin-ai-python-env
 ```
 
-不要直接清理所有 `libkyai*`、`libkysdk-genai*`、`kytensor*`、`llm-backend`、`onnxruntime-backend`、`kyml` 等库。实测这类广泛清理可能牵连 `ukui-panel`、系统托盘、Peony 文件管理器、`ukui-desktop-environment` 等核心桌面组件。
+如果需要进一步清理本地推理、模型和云端 AI 引擎包，必须逐组模拟。已验证可作为一组继续模拟并在不牵连桌面核心时卸载的包：
+
+```bash
+apt-get -s purge libkylin-ai-document-qa-service libkylin-ai-document-service libkylin-ai-recollect-client libkylin-ondevice-ai-engine-plugin libkylin-ondevice-embedding-engine libkylin-ondevice-nlp-engine libkylin-ondevice-traditional-ai-engine-plugin libkylin-ondevice-vision-engine kytensor-server kytensor-client kytensor-python kytensor-llm llm-backend onnxruntime-backend kyml libkyai-assistant0 libkyai-business-framework libkyai-config0 libkyai-depends libkysdk-genai-nlp0 libkysdk-genai-vision0
+```
+
+确认不会卸载 `ukui-panel`、`ukui-widget-system-tray`、`peony`、`ukui-search`、`ukui-desktop-environment`、`ukui-clipboard` 等桌面组件后再执行对应 `pkexec apt-get purge -y ...`。
+
+模型和云端引擎包可单独模拟：
+
+```bash
+apt-get -s purge kylin-cn-clip-model kylin-gte-base-model kylin-paddle-ocr-model kylin-portrait-matting-model
+apt-get -s purge libkylin-baidu-ai-engine-plugin libkylin-baidu-nlp-engine libkylin-baidu-speech-engine libkylin-baidu-vision-engine libkylin-custom-ai-engine-plugin libkylin-custom-nlp-engine libkylin-deepseek-ai-engine-plugin libkylin-deepseek-nlp-engine libkylin-freetrial-ai-engine-plugin libkylin-freetrial-nlp-engine libkylin-qwen-ai-engine-plugin libkylin-qwen-nlp-engine libkylin-xunfei-ai-engine-plugin libkylin-xunfei-nlp-engine libkylin-xunfei-speech-engine libkylin-xunfei-vision-engine
+```
+
+有些库虽然名字含 AI，但可能被 UKUI 或 Peony 使用，不能因为名字匹配就卸载。实测以下包直接卸载会牵连桌面核心或常用桌面服务：
+
+- `libkyai-data-management-client`：被 `ukui-search`、`libukui-search2`、`peony-intelligent-data-management-service` 依赖。
+- `libkysdk-ai-common`：被 `ukui-search`、`libukui-search2`、`peony-intelligent-data-management-service` 依赖。
+- `libkysdk-coreai-vision0`：被 `ukui-clipboard` 依赖。
+
+不要直接清理所有 `libkyai*`、`libkysdk-*ai*`、`libkysdk-coreai-*`、`kytensor*`、`llm-backend`、`onnxruntime-backend`、`kyml` 等库。实测这类广泛清理可能牵连 `ukui-panel`、系统托盘、Peony 文件管理器、`ukui-search`、`ukui-clipboard`、`ukui-desktop-environment` 等核心桌面组件。
+
+## 脚本化清理
+
+本经验库提供清理脚本：
+
+```bash
+$HOME/kylinos-desktop-v11-skill/scripts/cleanup-kylin-ai.sh
+```
+
+脚本默认只做 dry-run，不修改系统。它会模拟 apt 卸载并检查桌面核心保护名单，保护 `ukui-panel`、`ukui-widget-system-tray`、`peony`、`ukui-search`、`ukui-clipboard`、`ukui-desktop-environment` 等组件不被牵连。
+
+先演练：
+
+```bash
+$HOME/kylinos-desktop-v11-skill/scripts/cleanup-kylin-ai.sh --dry-run --user "$USER"
+```
+
+确认当前是维护模式后再执行：
+
+```bash
+sudo $HOME/kylinos-desktop-v11-skill/scripts/cleanup-kylin-ai.sh --apply --user "$USER"
+```
+
+脚本会保留已知仍被桌面依赖的 AI 命名库：`libkyai-data-management-client`、`libkysdk-ai-common`、`libkysdk-coreai-vision0`。不要为了“名字干净”把这些包强行加入脚本卸载列表，除非新的 apt 模拟和反向依赖检查已经证明不会牵连 UKUI/Peony。
 
 ## 残留清理
 
@@ -97,6 +143,37 @@ pkexec rm -rf "$HOME/.var/app/cn.kylin.kylin-aiassistant"
 ```bash
 ps -ef | rg -i 'kylin-ai|aiassistant|kyai|kytensor|recollect|kylin_ai' | rg -v rg
 pkexec kill <pid...>
+```
+
+卸载后必须检查并清理已经失去目标单元文件或可执行文件的自启动入口和 systemd enable 残留。否则当前登录会话的用户级 systemd 可能继续拉起旧服务，日志中出现 `Scheduled restart job`、`status=203/EXEC`、`Unit ... not found` 循环。
+
+先诊断：
+
+```bash
+systemctl --failed --no-pager
+systemctl --user --failed --no-pager
+systemctl list-units --all --no-pager | rg -i 'kylin-ai|aiassistant|kyai|kytensor|recollect|kylin_ai|vector-engine' || true
+systemctl --user list-units --all --no-pager | rg -i 'kylin-ai|aiassistant|kyai|kytensor|recollect|kylin_ai|vector-engine' || true
+find /etc/systemd /usr/etc/systemd /usr/lib/systemd /lib/systemd "$HOME/.config/systemd" -xtype l -o -type f 2>/dev/null | rg -i 'kylin-ai|aiassistant|kyai|kytensor|recollect|kylin_ai|vector-engine' || true
+rg -n 'kylin-ai|aiassistant|kyai|kytensor|recollect|kylin_ai|vector-engine' "$HOME/.config/autostart" /etc/xdg/autostart /usr/etc/xdg/autostart 2>/dev/null || true
+```
+
+如果确认这些路径不是包管理器持有、并且指向已卸载的 AI 单元或命令，可删除无主死引用并重载 systemd：
+
+```bash
+pkexec rm -f /etc/systemd/system/default.target.wants/kytensor.service /usr/etc/systemd/system/default.target.wants/kytensor.service
+pkexec rm -f /usr/etc/systemd/user/default.target.wants/kyai-data-management-service.service /usr/etc/systemd/user/default.target.wants/kylin-ai-document-qa-service.service /usr/etc/systemd/user/default.target.wants/kylin-ai-vector-engine.service
+pkexec rm -f /usr/etc/xdg/autostart/kylin-ai-runtime.desktop /usr/etc/xdg/autostart/kylin-aiassistant-autostart.desktop
+pkexec systemctl daemon-reload
+pkexec systemctl reset-failed
+systemctl --user daemon-reload 2>/dev/null || true
+systemctl --user reset-failed 2>/dev/null || true
+```
+
+随后按明确时间点检查日志，确认不再重复拉起：
+
+```bash
+journalctl -b --since '<cleanup-time>' --no-pager | rg -i 'Scheduled restart job|203/EXEC|not found|kylin-ai|aiassistant|kyai|kytensor|recollect|kylin_ai|vector-engine' || true
 ```
 
 如果 `kytensor-server` 包仍在，而 `kylin-ai-python-env` 或其 Python 环境已经被卸载，可能出现 `kytensor.service` 每几秒无限重启失败，造成系统卡顿和日志刷屏。典型日志：

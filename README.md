@@ -107,6 +107,8 @@ kylinos-desktop-v11-skill/
 │   ├── README.md
 │   ├── system-repair/
 │   └── feature-enhancement/
+├── scripts/
+│   └── cleanup-kylin-ai.sh
 ├── README.md
 └── README.en.md
 ```
