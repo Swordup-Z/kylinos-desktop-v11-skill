@@ -1,8 +1,8 @@
-# kylinos-desktop-v11-skill
+# os-fix-skill
 
 [English](README.en.md)
 
-这是一个面向 KylinOS Desktop V11 的系统经验库，用来沉淀桌面系统问题修复和系统功能增强的可复用流程。它不是可执行程序，而是一组给人和 AI 工具共同使用的结构化知识：人按目录查找经验，AI 工具从 `SKILL.md` 开始按需渐进式读取。
+这是一个面向 KylinOS Desktop V11 的系统经验库，用来沉淀桌面系统问题修复和系统功能增强的可复用流程。它不是可执行程序，也不绑定某个 AI 工具的内置 skill 目录，而是一组给人和多个 AI 工具共同使用的结构化知识：人按目录查找经验，AI 工具从 `$HOME/.os-fix-skill/SKILL.md` 开始按需渐进式读取。
 
 当前内容覆盖 UKUI、KARE/Kaiming、Clash Verge TUN、应用安装、aTrust/UEM 安全客户端、开机自启动、全局搜索、托盘、输入法、系统服务、维护模式、磐石架构、指纹/图形硬件、分区挂载、本地源码客制化和 AI 工具配置等场景。
 
@@ -81,12 +81,12 @@ opencode
 https://github.com/Swordup-Z/kylinos-desktop-v11-skill
 
 要求：
-1. 克隆到 $HOME/kylinos-desktop-v11-skill。
+1. 克隆到 $HOME/.os-fix-skill。
 2. 根据当前工具类型，把全局提示词配置到用户级文件，例如：
    - Codex: $HOME/.codex/AGENTS.md
    - Claude Code: $HOME/.claude/CLAUDE.md
    - opencode: $HOME/.config/opencode/AGENTS.md
-3. 当用户处理 KylinOS Desktop V11、UKUI、KARE/Kaiming、Clash Verge、TUN、维护模式、磐石架构、系统服务、分区挂载、AI 子系统等桌面系统问题时，先读取 $HOME/kylinos-desktop-v11-skill/SKILL.md，再按里面的 references 路由继续读取。
+3. 当用户处理 KylinOS Desktop V11、UKUI、KARE/Kaiming、Clash Verge、TUN、维护模式、磐石架构、系统服务、分区挂载、AI 子系统等桌面系统问题时，先读取 $HOME/.os-fix-skill/SKILL.md，再按里面的 references 路由继续读取。
 4. 配置完成后告诉我入口文件路径和后续如何使用。
 ```
 
@@ -94,13 +94,13 @@ https://github.com/Swordup-Z/kylinos-desktop-v11-skill
 
 ```bash
 cd "$HOME"
-git clone https://github.com/Swordup-Z/kylinos-desktop-v11-skill.git
+git clone https://github.com/Swordup-Z/kylinos-desktop-v11-skill.git "$HOME/.os-fix-skill"
 ```
 
 入口文件：
 
 ```text
-$HOME/kylinos-desktop-v11-skill/SKILL.md
+$HOME/.os-fix-skill/SKILL.md
 ```
 
 常见 AI 工具的用户级提示词位置：
@@ -142,7 +142,7 @@ source-rebuild
 ## 目录结构
 
 ```text
-kylinos-desktop-v11-skill/
+$HOME/.os-fix-skill/
 ├── SKILL.md
 ├── references/
 │   ├── README.md

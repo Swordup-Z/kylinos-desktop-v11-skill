@@ -1,8 +1,8 @@
-# kylinos-desktop-v11-skill
+# os-fix-skill
 
 [中文](README.md)
 
-This repository is a structured knowledge base for KylinOS Desktop V11. It records reusable workflows for desktop-system repair and feature enhancement. It is not an executable program. Humans can browse the directories directly, and AI tools can start from `SKILL.md` and progressively load only the relevant references.
+This repository is a structured knowledge base for KylinOS Desktop V11. It records reusable workflows for desktop-system repair and feature enhancement. It is not an executable program and is not tied to one AI tool's built-in skill directory. Humans can browse the directories directly, and multiple AI tools can start from `$HOME/.os-fix-skill/SKILL.md` and progressively load only the relevant references.
 
 It currently covers UKUI, KARE/Kaiming, Clash Verge TUN, application installation, aTrust/UEM security clients, autostart, global search, system tray behavior, input methods, system services, maintenance mode, the PanShi architecture, fingerprint and graphics hardware, storage layout, local source customizations, and AI-tool configuration.
 
@@ -81,12 +81,12 @@ Please install this KylinOS Desktop V11 system knowledge base:
 https://github.com/Swordup-Z/kylinos-desktop-v11-skill
 
 Requirements:
-1. Clone it to $HOME/kylinos-desktop-v11-skill.
+1. Clone it to $HOME/.os-fix-skill.
 2. Configure the user-level global prompt for the current tool, for example:
    - Codex: $HOME/.codex/AGENTS.md
    - Claude Code: $HOME/.claude/CLAUDE.md
    - opencode: $HOME/.config/opencode/AGENTS.md
-3. When the user works on KylinOS Desktop V11, UKUI, KARE/Kaiming, Clash Verge, TUN, maintenance mode, the PanShi architecture, system services, partitions, mounts, or desktop AI subsystem issues, first read $HOME/kylinos-desktop-v11-skill/SKILL.md, then follow its references routing.
+3. When the user works on KylinOS Desktop V11, UKUI, KARE/Kaiming, Clash Verge, TUN, maintenance mode, the PanShi architecture, system services, partitions, mounts, or desktop AI subsystem issues, first read $HOME/.os-fix-skill/SKILL.md, then follow its references routing.
 4. After installation, tell me the entry file path and how to use it later.
 ```
 
@@ -94,13 +94,13 @@ Requirements:
 
 ```bash
 cd "$HOME"
-git clone https://github.com/Swordup-Z/kylinos-desktop-v11-skill.git
+git clone https://github.com/Swordup-Z/kylinos-desktop-v11-skill.git "$HOME/.os-fix-skill"
 ```
 
 Entry file:
 
 ```text
-$HOME/kylinos-desktop-v11-skill/SKILL.md
+$HOME/.os-fix-skill/SKILL.md
 ```
 
 Common user-level prompt files:
@@ -142,7 +142,7 @@ source-rebuild
 ## Directory Layout
 
 ```text
-kylinos-desktop-v11-skill/
+$HOME/.os-fix-skill/
 ├── SKILL.md
 ├── references/
 │   ├── README.md

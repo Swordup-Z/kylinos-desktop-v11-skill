@@ -105,7 +105,7 @@ apt-get -s purge libkylin-baidu-ai-engine-plugin libkylin-baidu-nlp-engine libky
 本经验库提供清理脚本：
 
 ```bash
-$HOME/kylinos-desktop-v11-skill/scripts/cleanup-kylin-ai.sh
+$HOME/.os-fix-skill/scripts/cleanup-kylin-ai.sh
 ```
 
 脚本默认只做 dry-run，不修改系统。它会模拟 apt 卸载并检查桌面核心保护名单，保护 `ukui-panel`、`ukui-widget-system-tray`、`peony`、`ukui-search`、`ukui-clipboard`、`ukui-desktop-environment` 等组件不被牵连。
@@ -113,13 +113,13 @@ $HOME/kylinos-desktop-v11-skill/scripts/cleanup-kylin-ai.sh
 先演练：
 
 ```bash
-$HOME/kylinos-desktop-v11-skill/scripts/cleanup-kylin-ai.sh --dry-run --user "$USER"
+$HOME/.os-fix-skill/scripts/cleanup-kylin-ai.sh --dry-run --user "$USER"
 ```
 
 确认当前是维护模式后再执行：
 
 ```bash
-sudo $HOME/kylinos-desktop-v11-skill/scripts/cleanup-kylin-ai.sh --apply --user "$USER"
+sudo $HOME/.os-fix-skill/scripts/cleanup-kylin-ai.sh --apply --user "$USER"
 ```
 
 脚本会保留已知仍被桌面依赖的 AI 命名库：`libkyai-data-management-client`、`libkysdk-ai-common`、`libkysdk-coreai-vision0`。不要为了“名字干净”把这些包强行加入脚本卸载列表，除非新的 apt 模拟和反向依赖检查已经证明不会牵连 UKUI/Peony。

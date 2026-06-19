@@ -15,5 +15,5 @@
 
 ```bash
 mm-cli -s
-git -C "$HOME/kylinos-desktop-v11-skill" status --short
+git -C "$HOME/.os-fix-skill" status --short
 ```

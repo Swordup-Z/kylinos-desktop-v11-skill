@@ -153,10 +153,10 @@ apt-cache policy <package>
 如果当前本地 skill 没有覆盖该系统问题，在自行探索修复前，先尝试同步上游社区仓库，查看是否已有新增经验：
 
 ```bash
-test -d "$HOME/kylinos-desktop-v11-skill/.git" && \
-  git -C "$HOME/kylinos-desktop-v11-skill" status -sb
-git -C "$HOME/kylinos-desktop-v11-skill" fetch --prune
-git -C "$HOME/kylinos-desktop-v11-skill" pull --ff-only
+test -d "$HOME/.os-fix-skill/.git" && \
+  git -C "$HOME/.os-fix-skill" status -sb
+git -C "$HOME/.os-fix-skill" fetch --prune
+git -C "$HOME/.os-fix-skill" pull --ff-only
 ```
 
 同步前必须确认工作树没有本地未提交改动；如果存在本地修改、分支分叉、网络不可用或 `pull --ff-only` 失败，不要执行强制覆盖、reset 或 rebase。同步失败不是问题处理的阻塞条件，继续使用当前本地 skill、模型自身能力和通用系统维护经验诊断即可。

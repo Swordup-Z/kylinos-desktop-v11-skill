@@ -150,7 +150,7 @@ rg -n 'sandbox_mode|approval|approvals_reviewer|status_line|hide_full_access_war
 
 ## Kylin Desktop V11 经验沉淀
 
-- 处理当前桌面操作系统相关问题时，默认使用 `$HOME/kylinos-desktop-v11-skill/SKILL.md` 作为经验入口。
+- 处理当前桌面操作系统相关问题时，默认使用 `$HOME/.os-fix-skill/SKILL.md` 作为经验入口。
 - 开始处理 Kylin Desktop V11、UKUI、KARE、Kaiming、Clash Verge、系统服务、开机自启动、TUN、维护模式、系统保护/磐石架构等问题前，先读取该 `SKILL.md`，再按其中的引用文档继续读取对应 `references/system-repair/<scenario>.md` 或 `references/feature-enhancement/<scenario>.md`；如果 reference 指向 `knowledge/`，再读取对应知识章节。
 - 问题确认修复完成后，必须主动判断是否产生新的可复用诊断步骤、修复步骤、风险点或系统特性；有则立即更新到该 skill 合集的 `SKILL.md`、`references/` 路由或 `knowledge/` 章节，不等用户追问。
 - 最终回复中应说明本次经验是否已记录；如果已记录，给出对应 skill 文档路径；如果没有记录，说明原因是没有新增可复用经验。
@@ -162,12 +162,12 @@ rg -n 'sandbox_mode|approval|approvals_reviewer|status_line|hide_full_access_war
 - 切换维护模式并重启前，只允许做诊断、读取状态、模拟安装/卸载等非破坏操作；不要执行实际安装、卸载、写系统路径或改系统服务。
 ```
 
-`$HOME/.codex/AGENTS.md` 是用户级全局规则，换目录启动 Codex 也应生效；项目目录下的 `AGENTS.md` 只对该目录及其子目录工作区更合适。若两者都存在，桌面系统经验入口应保持一致，避免一个指向 `$HOME/kylinos-desktop-v11-skill/SKILL.md`，另一个指向过期路径。
+`$HOME/.codex/AGENTS.md` 是用户级全局规则，换目录启动 Codex 也应生效；项目目录下的 `AGENTS.md` 只对该目录及其子目录工作区更合适。若两者都存在，桌面系统经验入口应保持一致，避免一个指向 `$HOME/.os-fix-skill/SKILL.md`，另一个指向过期路径。
 
 初始化检查：
 
 ```bash
 test -f "$HOME/.codex/config.toml" && rg -n 'sandbox_mode|status_line|hide_full_access_warning' "$HOME/.codex/config.toml"
-test -f "$HOME/.codex/AGENTS.md" && rg -n 'kylinos-desktop-v11-skill|mm-cli -s|磐石架构' "$HOME/.codex/AGENTS.md"
-test -f "$HOME/kylinos-desktop-v11-skill/SKILL.md" && sed -n '1,80p' "$HOME/kylinos-desktop-v11-skill/SKILL.md"
+test -f "$HOME/.codex/AGENTS.md" && rg -n '\\.os-fix-skill|mm-cli -s|磐石架构' "$HOME/.codex/AGENTS.md"
+test -f "$HOME/.os-fix-skill/SKILL.md" && sed -n '1,80p' "$HOME/.os-fix-skill/SKILL.md"
 ```
