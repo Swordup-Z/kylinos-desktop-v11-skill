@@ -87,7 +87,8 @@ Requirements:
    - Claude Code: $HOME/.claude/CLAUDE.md
    - opencode: $HOME/.config/opencode/AGENTS.md
 3. When the user works on KylinOS Desktop V11, UKUI, KARE/Kaiming, Clash Verge, TUN, maintenance mode, the PanShi architecture, system services, partitions, mounts, or desktop AI subsystem issues, first read $HOME/.os-fix-skill/SKILL.md, then follow its references routing.
-4. After installation, tell me the entry file path and how to use it later.
+4. When the user works under $HOME/desktop-develop or /data/usershare/desktop-develop on an independent tool/application, first read that directory's AGENTS.md and follow the workspace or project-level routing; do not put project implementation requirements into this skill.
+5. After installation, tell me the entry file path and how to use it later.
 ```
 
 ### Option 2: Manual Installation
@@ -278,6 +279,14 @@ $HOME/desktop-develop/kylin-space-guard/AGENTS.md
 ```
 
 This skill keeps only system diagnostics, safety boundaries, and reusable repair knowledge. Concrete UI, build, verification, dependency, and implementation rules belong in the independent project. Tool projects must still follow this skill's system safety boundary: do not automatically delete ostree deployments, EFI files, GRUB config, loader entries, `/etc/fstab`, or partition tables.
+
+On this machine, the usual development workspace entry is:
+
+```text
+$HOME/desktop-develop/AGENTS.md
+```
+
+That file only routes requests to projects; each concrete project continues from its own `AGENTS.md`.
 
 ## License
 

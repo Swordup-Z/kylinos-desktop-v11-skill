@@ -87,7 +87,8 @@ https://github.com/Swordup-Z/kylinos-desktop-v11-skill
    - Claude Code: $HOME/.claude/CLAUDE.md
    - opencode: $HOME/.config/opencode/AGENTS.md
 3. 当用户处理 KylinOS Desktop V11、UKUI、KARE/Kaiming、Clash Verge、TUN、维护模式、磐石架构、系统服务、分区挂载、AI 子系统等桌面系统问题时，先读取 $HOME/.os-fix-skill/SKILL.md，再按里面的 references 路由继续读取。
-4. 配置完成后告诉我入口文件路径和后续如何使用。
+4. 当用户在 $HOME/desktop-develop 或 /data/usershare/desktop-develop 下进行独立工具/应用开发时，先读取对应目录的 AGENTS.md，并按工作区或项目级提示词路由；不要把项目实现要求写入本 skill。
+5. 配置完成后告诉我入口文件路径和后续如何使用。
 ```
 
 ### 方式二：手动安装
@@ -279,6 +280,14 @@ $HOME/desktop-develop/kylin-space-guard/AGENTS.md
 ```
 
 本 skill 只保留系统诊断、安全边界和可复用修复经验；具体 UI、构建、验证、依赖选择和项目实现规则应维护在独立项目内。工具类项目仍必须遵守本 skill 的系统安全边界：不得自动删除 ostree deployment、EFI、GRUB、loader entries、`/etc/fstab` 或分区表。
+
+如果使用本机的开发工作区，入口通常是：
+
+```text
+$HOME/desktop-develop/AGENTS.md
+```
+
+该文件只做项目路由；具体项目继续读取各自目录下的 `AGENTS.md`。
 
 ## License
 
