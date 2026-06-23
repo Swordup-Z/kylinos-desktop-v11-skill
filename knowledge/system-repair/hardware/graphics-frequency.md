@@ -73,7 +73,37 @@ failed to set ftg frequency:-15
 devfreq PHYT0048:00: dvfs failed with (-15) error
 ```
 
-这说明当前硬件的图形驱动在动态调频路径上失败。若该错误与卡死、黑屏、图形异常时间接近，可以先采用保守策略：把对应 GPU `devfreq` governor 固定到 `performance`，减少动态频率切换。
+这说明当前硬件的图形驱动在动态调频路径上失败。若该错误与卡死、黑屏、图形异常时间接近，先不要默认把所有 `devfreq` 场景全局固定到 `performance`，否则会破坏“均衡/省电/性能”电源模式语义。优先保留 `simple_ondemand`，只抬高可疑 GPU/总线节点的 `min_freq` 下限；只有 A/B 验证下限策略仍会复现卡死，或用户明确接受更高功耗/发热取舍时，才考虑将特定节点或特定场景固定到 `performance`。
+
+若历史日志中还出现类似：
+
+```text
+[ftg340]: GPU[0] core0 hang, automatic recovery.
+```
+
+则问题更接近 FTG 驱动或内核图形栈稳定性，而不是单纯电源模式选择。此时应先确认当前运行内核、FTG 包版本和仓库候选版本，再评估官方更新是否覆盖图形模块、`linux-modules-extra` 和用户态 FTG 库：
+
+```bash
+uname -r
+dpkg -l 'linux-image*' 'linux-modules-extra*' ftg340-v11 | rg '^(ii|hi)'
+apt-cache policy linux-image-generic linux-modules-extra-$(uname -r) ftg340-v11
+modinfo ftg340 2>/dev/null | sed -n '1,20p'
+```
+
+如果仓库中存在同发行通道的更新版本，且卡死证据明确落在 FTG/DVFS 路径，优先使用发行版官方包更新驱动和内核模块栈。这是根因方向的修复；抬高 `min_freq` 只是规避低频切换抖动的兜底策略，不应替代官方驱动修复。安装或更新内核、`linux-modules-extra`、FTG 驱动包时必须处于维护模式，且不要中断正在运行的 `apt`/`dpkg`/DKMS 流程。
+
+更新后必须验证包状态、DKMS、ostree 启动入口和回退入口：
+
+```bash
+dpkg --audit
+sudo apt-get check
+dkms status -k <new-kernel-version>
+rg -n '<new-kernel-version>|<old-kernel-version>|vmlinuz|initramfs' /boot/loader.0 /boot/grub/grub.cfg 2>/dev/null
+ls -lh /boot /boot/ostree/* 2>/dev/null
+systemctl --failed --no-pager
+```
+
+KylinOS Desktop V11 的 ostree 启动链可能由内核 postinst 脚本更新，例如输出 `ostree update kernel success`。不要手工移动 `/boot/ostree` 下的镜像，也不要在未确认启动入口前删除旧内核；旧内核回退入口保留正常时，更利于后续排障。
 
 如果用户描述的是“系统很卡、显示不流畅、打开托盘或菜单慢”，不一定会同时出现新的内核错误。也要检查 UKUI 电源管理是否在空闲低负载场景把 CPU 频率压得过低：
 
@@ -115,7 +145,7 @@ cat /sys/class/devfreq/<devfreq-device>/available_governors
 cat /sys/class/devfreq/<devfreq-device>/available_frequencies
 ```
 
-如果 `<devfreq-device>` 支持 `performance`，可以做运行时验证：
+如果 `<devfreq-device>` 支持 `performance`，可以把它作为短时 A/B 验证手段，确认问题是否来自动态调频切换；验证时要说明这不是默认持久化方案：
 
 ```bash
 echo performance | sudo tee /sys/class/devfreq/<devfreq-device>/governor
@@ -129,9 +159,9 @@ journalctl --since '10 minutes ago' --no-pager | rg -i 'ukui-powermanagement-ser
 rg -n 'DevfreqPolicy=' /usr/share/ukui/ukui-power-manager /etc 2>/dev/null
 ```
 
-在 KylinOS Desktop V11/UKUI 中，`ukui-powermanagement-service` 可能会按场景把 `devfreq` governor 改回配置文件里的策略。此时更合适的持久化修复是修改 UKUI 电源管理策略源，而不是写一个和它抢状态的 systemd oneshot。
+在 KylinOS Desktop V11/UKUI 中，`ukui-powermanagement-service` 可能会按场景把 `devfreq` governor 改回配置文件里的策略。此时更合适的持久化修复是修改 UKUI 电源管理策略源，而不是写一个和它抢状态的 systemd oneshot；但修改时应尽量保留电源模式语义，不要把 Balance、Performance、Powersave 全部改成同一个策略。
 
-修改前先备份。例如只把全局 `[devfreqPolicy]` 段的策略改为 `performance`：
+修改前先备份。只有用户明确接受“所有电源模式都牺牲功耗换稳定性”时，才考虑把全局 `[devfreqPolicy]` 段全部改为 `performance`：
 
 ```bash
 sudo sed -i.bak-<date> -e '/^\[devfreqPolicy\]/,/^\[/ s/^\([^#][^=]*DevfreqPolicy=\).*/\1performance/' /usr/share/ukui/ukui-power-manager/upm-hardware-global.conf
