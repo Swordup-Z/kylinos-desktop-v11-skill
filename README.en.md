@@ -8,7 +8,7 @@ It currently covers UKUI, KARE/Kaiming, Clash Verge TUN, application installatio
 
 ## Install an AI Coding Tool First
 
-If you do not already have an AI coding tool, install one of Codex, Claude Code, or opencode first. The commands below cover common Linux/macOS terminals and Windows PowerShell. For other systems or installation methods, use the linked official docs.
+If you do not already have an AI coding tool, install one of Codex, Claude Code, or opencode first. The commands below target KylinOS Desktop V11 and similar Linux desktop terminals. For more installation methods, use the linked official docs.
 
 ### Codex
 
@@ -17,25 +17,11 @@ Official docs:
 - Codex CLI: https://developers.openai.com/codex/cli
 - Codex quickstart: https://developers.openai.com/codex/quickstart
 
-Recommended Linux/macOS install command:
+Recommended install command:
 
 ```bash
 curl -fsSL https://chatgpt.com/codex/install.sh | sh
 ```
-
-Recommended Windows PowerShell install command:
-
-```powershell
-powershell -ExecutionPolicy ByPass -c "irm https://chatgpt.com/codex/install.ps1 | iex"
-```
-
-Unattended Windows install:
-
-```powershell
-$env:CODEX_NON_INTERACTIVE=1; irm https://chatgpt.com/codex/install.ps1 | iex
-```
-
-On Windows, Codex CLI can run natively in PowerShell. Use WSL2 instead when you need a Linux-native development environment.
 
 Start it with:
 
@@ -81,7 +67,7 @@ Start it with:
 opencode
 ```
 
-If your system policy does not allow `curl | sh` or `curl | bash`, open the official pages above and choose a standalone package, Homebrew, npm, or another trusted installation method for your system.
+If your system policy does not allow `curl | sh` or `curl | bash`, open the official pages above and choose a standalone package, npm, or another trusted installation method for your Linux desktop environment.
 
 ## Install This Knowledge Base
 
