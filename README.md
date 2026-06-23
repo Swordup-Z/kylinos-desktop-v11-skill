@@ -1,4 +1,4 @@
-# os-fix-skill
+# kylinos-v11-desktop-fix-skill
 
 [English](README.en.md)
 
@@ -78,7 +78,7 @@ opencode
 ```text
 请安装这个 KylinOS Desktop V11 系统经验库：
 
-https://github.com/Swordup-Z/os-fix-skill
+https://github.com/Swordup-Z/kylinos-v11-desktop-fix-skill
 
 要求：
 1. 克隆到 $HOME/.os-fix-skill。
@@ -95,7 +95,7 @@ https://github.com/Swordup-Z/os-fix-skill
 
 ```bash
 cd "$HOME"
-git clone https://github.com/Swordup-Z/os-fix-skill.git "$HOME/.os-fix-skill"
+git clone https://github.com/Swordup-Z/kylinos-v11-desktop-fix-skill.git "$HOME/.os-fix-skill"
 ```
 
 入口文件：

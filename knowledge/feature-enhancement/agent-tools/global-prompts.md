@@ -71,7 +71,7 @@ $HOME/.agents/skills/<skill-name>/SKILL.md
 ```text
 请帮我安装这个 KylinOS Desktop V11 系统问题处理 skill：
 
-https://github.com/Swordup-Z/os-fix-skill
+https://github.com/Swordup-Z/kylinos-v11-desktop-fix-skill
 
 要求：
 1. 将仓库克隆到 $HOME/.os-fix-skill，作为 Codex、Claude Code、opencode 等工具共用的本机经验库。
