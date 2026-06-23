@@ -8,7 +8,7 @@
 
 ## 先安装一个 AI 编程工具
 
-如果还没有可用的 AI 编程工具，先安装 Codex、Claude Code 或 opencode 之一。下面命令适用于 Linux/macOS 终端；其他系统或更多安装方式见对应官方文档。
+如果还没有可用的 AI 编程工具，先安装 Codex、Claude Code 或 opencode 之一。下面命令优先覆盖常见 Linux/macOS 终端和 Windows PowerShell；其他系统或更多安装方式见对应官方文档。
 
 ### Codex
 
@@ -17,11 +17,25 @@
 - Codex CLI：https://developers.openai.com/codex/cli
 - Codex 快速开始：https://developers.openai.com/codex/quickstart
 
-推荐安装命令：
+Linux/macOS 推荐安装命令：
 
 ```bash
 curl -fsSL https://chatgpt.com/codex/install.sh | sh
 ```
+
+Windows 推荐在 PowerShell 中安装：
+
+```powershell
+powershell -ExecutionPolicy ByPass -c "irm https://chatgpt.com/codex/install.ps1 | iex"
+```
+
+无人值守安装：
+
+```powershell
+$env:CODEX_NON_INTERACTIVE=1; irm https://chatgpt.com/codex/install.ps1 | iex
+```
+
+Windows 可以在 PowerShell 中原生运行 Codex CLI；如果需要更接近 Linux 的原生开发环境，可以在 WSL2 中按 Linux 方式安装和使用。
 
 安装后启动：
 
