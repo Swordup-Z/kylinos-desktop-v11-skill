@@ -2,11 +2,11 @@
 
 [中文](README.md)
 
-This repository is a structured repair knowledge base for KylinOS Desktop V11. It records reusable workflows for existing desktop-system behavior that is broken, failing, noisy, not persistent, or caused by damaged system services. It is not an executable program and is not tied to one AI tool's built-in skill directory. Humans can browse the directories directly, and multiple AI tools can start from `$HOME/.os-fix-skill/SKILL.md` and progressively load only the relevant references.
+This repository is a structured repair knowledge base for KylinOS Desktop V11. It records reusable workflows for existing desktop-system behavior that is broken, failing, noisy, not persistent, or caused by damaged system services. It is not an executable program and is not tied to one tool's built-in directory. The entry file is `$HOME/.os-fix-skill/SKILL.md`; detailed content is organized under `references/` and `knowledge/`.
 
-It currently covers UKUI, KARE/Kaiming, Clash Verge TUN, application installation, aTrust/UEM security clients, autostart, global search, system tray behavior, input methods, system services, maintenance mode, the PanShi architecture, fingerprint and graphics hardware, storage layout, desktop AI subsystem cleanup, and AI-tool repair boundaries.
+It covers UKUI, KARE/Kaiming, Clash Verge TUN, application installation, aTrust/UEM security clients, autostart, global search, system tray behavior, input methods, system services, maintenance mode, the PanShi architecture, fingerprint and graphics hardware, storage layout, and desktop AI subsystem cleanup.
 
-Feature enhancement, local customization, default-behavior changes, source-level feature additions, and AI-tool configuration improvements now live in `$HOME/.os-enhance-skill`.
+Feature enhancement, local customization, default-behavior changes, and source-level feature additions are maintained in the companion enhancement knowledge base.
 
 ## Install an AI Coding Tool First
 
@@ -73,28 +73,6 @@ If your system policy does not allow `curl | sh` or `curl | bash`, open the offi
 
 ## Install This Knowledge Base
 
-### Option 1: Ask an AI Tool to Install It
-
-Send this prompt to Codex, Claude Code, opencode, or a similar tool:
-
-```text
-Please install this KylinOS Desktop V11 repair knowledge base:
-
-https://github.com/Swordup-Z/kylinos-v11-desktop-fix-skill
-
-Requirements:
-1. Clone it to $HOME/.os-fix-skill.
-2. Configure the user-level global prompt for the current tool, for example:
-   - Codex: $HOME/.codex/AGENTS.md
-   - Claude Code: $HOME/.claude/CLAUDE.md
-   - opencode: $HOME/.config/opencode/AGENTS.md
-3. When the user works on KylinOS Desktop V11, UKUI, KARE/Kaiming, Clash Verge, TUN, maintenance mode, the PanShi architecture, system services, partitions, mounts, or desktop AI subsystem repair issues, first read $HOME/.os-fix-skill/SKILL.md, then follow its references routing.
-4. When the user works on feature enhancement, local customization, default-behavior changes, AI-tool configuration, or source-level feature additions, do not use this repository; switch to the corresponding enhancement knowledge base.
-5. After installation, tell me the entry file path and how to use it later.
-```
-
-### Option 2: Manual Installation
-
 ```bash
 cd "$HOME"
 git clone https://github.com/Swordup-Z/kylinos-v11-desktop-fix-skill.git "$HOME/.os-fix-skill"
@@ -106,13 +84,15 @@ Entry file:
 $HOME/.os-fix-skill/SKILL.md
 ```
 
-Common user-level prompt files:
+Common user-level rule files:
 
 ```text
 Codex:       $HOME/.codex/AGENTS.md
 Claude Code: $HOME/.claude/CLAUDE.md
 opencode:    $HOME/.config/opencode/AGENTS.md
 ```
+
+After these rule files are connected to this knowledge base, KylinOS Desktop V11 repair issues can start from `$HOME/.os-fix-skill/SKILL.md` and then follow `references/system-repair/`. Feature enhancement, local customization, and default-behavior changes are maintained in `$HOME/.os-enhance-skill`.
 
 Use a fixed session name for system maintenance, such as `os-fix`:
 
@@ -124,7 +104,7 @@ opencode resume os-fix
 
 ## Architecture
 
-This skill only keeps system repair workflows: existing system behavior is broken, failing, noisy, or not persistent. Examples include TUN failures, autostart not working, system-tray hidden state not persisting, disconnected fingerprint devices, and service failures.
+This repository focuses on system repair workflows: existing system behavior is broken, failing, noisy, or not persistent. Examples include TUN failures, autostart not working, system-tray hidden state not persisting, disconnected fingerprint devices, and service failures.
 
 Repair content is grouped by scenario:
 
@@ -196,7 +176,7 @@ SKILL.md
 -> knowledge/system-repair/ukui/search.md
 ```
 
-For tasks such as adding a custom command panel to UKUI global search or configuring AI tools to load shared skills, use `$HOME/.os-enhance-skill/SKILL.md`.
+For tasks such as adding a custom command panel to UKUI global search or connecting shared knowledge bases, use `$HOME/.os-enhance-skill/SKILL.md`.
 
 ## Coverage
 
@@ -232,13 +212,13 @@ Switching maintenance mode usually requires a reboot. Detailed operational rules
 
 ## Companion Tools
 
-Space cleanup, Kaiming/KARE layer control, and ostree usage auditing should live in a companion application instead of large embedded scripts or project-specific development requirements inside knowledge files. If a local development workspace exists, read the project-level prompt first:
+Space cleanup, Kaiming/KARE layer control, and ostree usage auditing are better handled by companion applications. If a local development workspace exists, start from the corresponding project rules:
 
 ```text
 $HOME/desktop-develop/kylin-space-guard/AGENTS.md
 ```
 
-This skill keeps only system diagnostics, safety boundaries, and reusable repair knowledge. Concrete UI, build, verification, dependency, and implementation rules belong in the independent project. Tool projects must still follow this skill's system safety boundary: do not automatically delete ostree deployments, EFI files, GRUB config, loader entries, `/etc/fstab`, or partition tables.
+This repository records system diagnostics, safety boundaries, and reusable repair knowledge. Concrete UI, build, verification, dependency, and implementation rules belong in the independent project. Tool projects must still follow the system safety boundary: do not automatically delete ostree deployments, EFI files, GRUB config, loader entries, `/etc/fstab`, or partition tables.
 
 On this machine, the usual development workspace entry is:
 

@@ -2,11 +2,11 @@
 
 [English](README.en.md)
 
-这是一个面向 KylinOS Desktop V11 的系统修复经验库，用来沉淀桌面系统已有能力异常、失效、报错、不能持久化、安装失败或系统服务损坏时的可复用修复流程。它不是可执行程序，也不绑定某个 AI 工具的内置 skill 目录，而是一组给人和多个 AI 工具共同使用的结构化知识：人按目录查找经验，AI 工具从 `$HOME/.os-fix-skill/SKILL.md` 开始按需渐进式读取。
+这是一个面向 KylinOS Desktop V11 的系统修复经验库，用来沉淀桌面系统已有能力异常、失效、报错、不能持久化、安装失败或系统服务损坏时的可复用修复流程。它不是可执行程序，也不绑定某个工具的内置目录；入口文件为 `$HOME/.os-fix-skill/SKILL.md`，详细内容按 `references/` 和 `knowledge/` 渐进展开。
 
-当前内容覆盖 UKUI、KARE/Kaiming、Clash Verge TUN、应用安装、aTrust/UEM 安全客户端、开机自启动、全局搜索、托盘、输入法、系统服务、维护模式、磐石架构、指纹/图形硬件、分区挂载、AI 子系统残留和 AI 工具修复边界等场景。
+内容覆盖 UKUI、KARE/Kaiming、Clash Verge TUN、应用安装、aTrust/UEM 安全客户端、开机自启动、全局搜索、托盘、输入法、系统服务、维护模式、磐石架构、指纹/图形硬件、分区挂载和桌面 AI 子系统残留等场景。
 
-系统功能增强、本地客制化、默认行为调整、源码级功能新增和 AI 工具配置增强已拆分到 `$HOME/.os-enhance-skill`。
+系统功能增强、本地客制化、默认行为调整和源码级功能新增由功能增强经验库维护。
 
 ## 先安装一个 AI 编程工具
 
@@ -73,46 +73,26 @@ opencode
 
 ## 安装本经验库
 
-### 方式一：让 AI 工具安装
-
-把下面这段话发给 Codex、Claude Code、opencode 等工具即可：
-
-```text
-请安装这个 KylinOS Desktop V11 系统修复经验库：
-
-https://github.com/Swordup-Z/kylinos-v11-desktop-fix-skill
-
-要求：
-1. 将仓库克隆到 $HOME/.os-fix-skill。
-2. 根据当前工具类型，把全局提示词配置到用户级文件，例如：
-   - Codex: $HOME/.codex/AGENTS.md
-   - Claude Code: $HOME/.claude/CLAUDE.md
-   - opencode: $HOME/.config/opencode/AGENTS.md
-3. 当用户处理 KylinOS Desktop V11、UKUI、KARE/Kaiming、Clash Verge、TUN、维护模式、磐石架构、系统服务、分区挂载、AI 子系统等桌面系统修复问题时，先读取 $HOME/.os-fix-skill/SKILL.md，再按里面的 references 路由继续读取。
-4. 当用户处理系统功能增强、本地客制化、默认行为调整、AI 工具配置或源码级功能新增时，不使用本仓库，应切换到对应的功能增强经验库。
-5. 配置完成后告诉我入口文件路径和后续如何使用。
-```
-
-### 方式二：手动安装
-
 ```bash
 cd "$HOME"
 git clone https://github.com/Swordup-Z/kylinos-v11-desktop-fix-skill.git "$HOME/.os-fix-skill"
 ```
 
-入口文件：
+入口文件是：
 
 ```text
 $HOME/.os-fix-skill/SKILL.md
 ```
 
-常见 AI 工具的用户级提示词位置：
+常见工具的用户级规则文件位置：
 
 ```text
 Codex:       $HOME/.codex/AGENTS.md
 Claude Code: $HOME/.claude/CLAUDE.md
 opencode:    $HOME/.config/opencode/AGENTS.md
 ```
+
+把这些规则文件接入本经验库后，KylinOS Desktop V11 桌面系统修复问题可从 `$HOME/.os-fix-skill/SKILL.md` 进入，再按其中的 `references/system-repair/` 路由继续查阅。功能增强、本地客制化和默认行为调整由 `$HOME/.os-enhance-skill` 维护。
 
 系统维护使用固定会话名，例如 `os-fix`。之后遇到系统问题时，恢复同一个会话继续处理：
 
@@ -124,7 +104,7 @@ opencode resume os-fix
 
 ## 整体架构
 
-当前 skill 只保留系统问题修复：系统已有能力异常、失效、报错、不能持久化。例如 TUN 模式失败、开机自启动不生效、托盘隐藏状态丢失、指纹设备断开、系统服务异常。
+本仓库面向系统修复场景：系统已有能力异常、失效、报错、不能持久化。例如 TUN 模式失败、开机自启动不生效、托盘隐藏状态丢失、指纹设备断开、系统服务异常。
 
 修复内容按场景分类：
 
@@ -196,7 +176,7 @@ SKILL.md
 -> knowledge/system-repair/ukui/search.md
 ```
 
-给 UKUI 全局搜索增加自定义命令面板、配置 AI 工具自动加载经验库等增强任务，请使用 `$HOME/.os-enhance-skill/SKILL.md`。
+给 UKUI 全局搜索增加自定义命令面板、接入共享经验库等增强任务，可从 `$HOME/.os-enhance-skill/SKILL.md` 进入。
 
 ## 当前覆盖范围
 
@@ -233,13 +213,13 @@ sudo mm-cli -c -a
 
 ## 独立工具
 
-空间清理、Kaiming/KARE 应用层治理、ostree 占用审计这类任务建议使用独立应用承载，而不是把大段脚本或项目开发要求直接塞进 knowledge。若本机存在独立开发工作区，优先从项目目录读取项目级提示词：
+空间清理、Kaiming/KARE 应用层治理、ostree 占用审计这类任务适合由独立应用承载。若本机存在独立开发工作区，可从对应项目的规则文件进入：
 
 ```text
 $HOME/desktop-develop/kylin-space-guard/AGENTS.md
 ```
 
-本 skill 只保留系统诊断、安全边界和可复用修复经验；具体 UI、构建、验证、依赖选择和项目实现规则应维护在独立项目内。工具类项目仍必须遵守本 skill 的系统安全边界：不得自动删除 ostree deployment、EFI、GRUB、loader entries、`/etc/fstab` 或分区表。
+本仓库记录系统诊断、安全边界和可复用修复经验；具体 UI、构建、验证、依赖选择和项目实现规则应维护在独立项目内。工具类项目仍必须遵守系统安全边界：不得自动删除 ostree deployment、EFI、GRUB、loader entries、`/etc/fstab` 或分区表。
 
 如果使用本机的开发工作区，入口通常是：
 
