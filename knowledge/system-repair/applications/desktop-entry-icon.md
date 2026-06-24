@@ -146,6 +146,21 @@ rm -f /opt/kare-applications/<version>/upper/usr/bin/<bad-command>
 
 如果 `merge/` 视图仍显示旧文件但 `upper/` 源文件已经消失，通常是 overlay 合并视图未刷新。不要为了清一个菜单项强行重挂 KARE overlay，尤其是相关应用仍在运行时；重启 KARE 或系统后再复查。
 
+确需刷新 KARE overlay 时，先关闭相关应用并确认没有进程仍使用目标应用路径。不要直接依赖 `systemctl restart var-opt-kare...merge-usr.mount` 这类从 `/proc/self/mountinfo` 生成的运行时 mount unit；它可能先卸载成功，再因为没有持久 mount 参数而挂载失败，导致 `merge/usr` 暂时不是挂载点。若已经发生这种情况，按 `findmnt` 中原始参数手动挂回：
+
+```bash
+mount -t overlay overlay \
+  -o lowerdir=/opt/kare-applications/base/kare-v10sp1/usr:/opt/kare-applications/host/usr,upperdir=/opt/kare-applications/v10sp1/upper/usr,workdir=/opt/kare-applications/v10sp1/work/usr \
+  /var/opt/kare-applications/v10sp1/merge/usr
+```
+
+重挂后验证：
+
+```bash
+mountpoint /var/opt/kare-applications/v10sp1/merge/usr
+findmnt -T /var/opt/kare-applications/v10sp1/merge/usr
+```
+
 验证时确认：
 
 ```bash
