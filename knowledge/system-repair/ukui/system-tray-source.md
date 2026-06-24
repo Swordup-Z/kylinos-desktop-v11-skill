@@ -32,7 +32,7 @@ QML: /usr/share/ukui/widgets/org.ukui.systemTray/ui/
 git clone https://gitee.com/openkylin/ukui-sni.git
 ```
 
-如果发行版没有公开精确源码包，不要只凭 tag 名称相近就替换系统库；按 `knowledge/feature-enhancement/source-rebuild/README.md` 的“源码获取与候选节点收敛”流程，用 changelog、bug id、关键符号、`readelf`、`nm` 和 QML 接口做精确比对。
+如果发行版没有公开精确源码包，不要只凭 tag 名称相近就替换系统库；按 `knowledge/system-repair/source-rebuild/README.md` 的源码修复边界，用 changelog、bug id、关键符号、`readelf`、`nm` 和 QML 接口做精确比对。
 
 ## 最小补丁思路
 

@@ -1,8 +1,5 @@
 # 系统问题修复：AI 工具边界
 
-当前修复类 AI 工具知识复用功能增强侧的配置章节：
+修复系统问题时，AI 工具边界重点关注维护模式、提权边界、不要把 AI 工具权限误认为系统 root 权限。
 
-- [`../../feature-enhancement/agent-tools/codex-config.md`](../../feature-enhancement/agent-tools/codex-config.md)
-- [`../../feature-enhancement/agent-tools/global-prompts.md`](../../feature-enhancement/agent-tools/global-prompts.md)
-
-修复系统问题时重点关注维护模式、提权边界、不要把 AI 工具权限误认为系统 root 权限。
+如果任务是配置 Codex、Claude Code、opencode 的全局提示词、权限或多工具加载规则，切换到 `$HOME/.os-enhance-skill/SKILL.md`，再按 `references/feature-enhancement/agent-tools.md` 路由。

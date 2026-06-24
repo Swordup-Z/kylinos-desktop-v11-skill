@@ -56,7 +56,7 @@ libsearch/websearch/web-search-plugin.cpp
 
 要真正新增 Bing/Google，不应只改 gsettings，也不应只补图标；需要同时修改设置插件下拉框和后端 URL 映射，然后以与当前系统包匹配的版本重新构建、安装。没有当前系统包的精确源码和构建依赖时，不通过二进制字符串 patch 或替换共享库处理，因为这会影响 UKUI 全局搜索和控制中心稳定性。
 
-如果需要进入源码级修改，进入 `knowledge/feature-enhancement/source-rebuild/README.md`，只读取与当前源码修改匹配的细分章节。
+如果需要进入修复类源码修改，先读取 `knowledge/system-repair/source-rebuild/README.md`。如果源码修改目标是新增搜索引擎、自定义命令 provider 等功能增强，切换到 `$HOME/.os-enhance-skill/SKILL.md`。
 
 判断源码是否与当前系统包精确匹配时，先看本机二进制包版本：
 
@@ -94,7 +94,7 @@ git ls-remote --heads https://gitee.com/openkylin/ukui-search.git | rg 'openkyli
 - 手动编辑 JSON 影响使用效率时，在全局搜索设置页新增“自定义命令”入口，打开图形化配置对话框，读写同一个用户级 JSON。
 - 为了让配置可迁移，provider 可支持 `~`、`$HOME`、`${HOME}` 在 `command`、`args`、`workingDirectory` 单个 token 内展开。例如打开下载目录可写成 `command=xdg-open`、`args=["$HOME/下载"]`、`detached=true`，不要硬编码 `/home/<user>/下载`。
 
-如果当前系统没有该 provider，需要源码级扩展 `libukui-search`，继续读取 [`../../feature-enhancement/ukui/search-command-provider.md`](../../feature-enhancement/ukui/search-command-provider.md)。
+如果当前系统没有该 provider，需要源码级扩展 `libukui-search`，切换到 `$HOME/.os-enhance-skill/SKILL.md`，再按 `references/feature-enhancement/ukui.md` 路由。
 
 ### 能否交给默认浏览器的默认搜索引擎
 

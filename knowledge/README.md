@@ -1,13 +1,14 @@
 # Knowledge 结构说明
 
-`knowledge/` 保存具体可复用知识，包括背景、诊断、修复或增强步骤、验证、回滚和清理规则。
+`knowledge/` 保存具体可复用系统修复知识，包括背景、诊断、修复步骤、验证、回滚和清理规则。
 
-## 两类知识
+## 知识入口
 
-- `system-repair/`：系统问题修复知识。
-- `feature-enhancement/`：系统功能增强知识。
+- `system-repair/`：系统已有能力异常、失效、报错、不能持久化、安装失败或系统服务损坏的修复知识。
 
-两个目录使用相同场景分类：
+功能增强、本地客制化和默认行为调整已拆分到 `$HOME/.os-enhance-skill`。
+
+场景分类：
 
 ```text
 system/
@@ -26,18 +27,18 @@ source-rebuild/
 
 ```text
 SKILL.md
--> references/<system-repair|feature-enhancement>/<scenario>.md
--> knowledge/<system-repair|feature-enhancement>/<scenario>/README.md
--> knowledge/<system-repair|feature-enhancement>/<scenario>/<topic>.md
+-> references/system-repair/<scenario>.md
+-> knowledge/system-repair/<scenario>/README.md
+-> knowledge/system-repair/<scenario>/<topic>.md
 ```
 
-`references/` 只做任务类型和实际场景路由；场景 `README.md` 只做特定分类和具体实例索引；具体 `<topic>.md` 才记录处理过程。新增经验时先判断任务类型和场景，再放入对应目录；如果没有合适章节，新建一个最小主题文件，并从同场景 README 链接过去。
+`references/` 只做实际修复场景路由；场景 `README.md` 只做特定分类和具体实例索引；具体 `<topic>.md` 才记录处理过程。新增经验时先判断场景，再放入对应目录；如果没有合适章节，新建一个最小主题文件，并从同场景 README 链接过去。
 
-通过源码修改实现的可复用功能，patch 集放在同场景目录下：
+通过源码修改实现的可复用修复，patch 集放在同场景目录下：
 
 ```text
-knowledge/<system-repair|feature-enhancement>/<scenario>/patches/<feature-id>/PATCHSET.md
-knowledge/<system-repair|feature-enhancement>/<scenario>/patches/<feature-id>/*.patch
+knowledge/system-repair/<scenario>/patches/<fix-id>/PATCHSET.md
+knowledge/system-repair/<scenario>/patches/<fix-id>/*.patch
 ```
 
 只有需要在源码树中复用或迁移该功能时才读取 patch 集。

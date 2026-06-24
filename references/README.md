@@ -1,13 +1,12 @@
 # References 路由说明
 
-`references/` 是任务类型和实际场景的策略路由入口，不保存详细修复过程。
+`references/` 是系统修复场景的策略路由入口，不保存详细修复过程。
 
-## 两类入口
+## 入口目录
 
-- `system-repair/`：系统已有能力异常、失效、报错、不能持久化。
-- `feature-enhancement/`：系统原本能工作，但需要新增能力、改变默认行为或做本地客制化。
+`system-repair/` 用于系统已有能力异常、失效、报错、不能持久化、安装失败或系统服务损坏的场景。功能增强、本地客制化和默认行为调整已拆分到 `$HOME/.os-enhance-skill`。
 
-两个目录使用相同场景文件名：
+场景文件名：
 
 ```text
 system.md
@@ -22,11 +21,11 @@ source-rebuild.md
 
 ## 使用方式
 
-1. 先判断任务类型：修复还是增强。
+1. 先确认任务属于系统修复，而不是功能增强。
 2. 再判断场景：system、applications、ukui、network、hardware、storage、agent-tools 或 source-rebuild。
 3. 只读取一个最小匹配 reference。
 4. reference 只指向该场景的 knowledge 索引，不直接展开所有细分知识。
-5. 进入 `knowledge/<type>/<scenario>/README.md` 后，只读取与用户问题匹配的具体章节；不要一次性读取整个场景目录。
+5. 进入 `knowledge/system-repair/<scenario>/README.md` 后，只读取与用户问题匹配的具体章节；不要一次性读取整个场景目录。
 
 ## 层级链路
 
@@ -43,14 +42,13 @@ source-rebuild.md
 
 ```text
 SKILL.md
--> references/<system-repair|feature-enhancement>/<scenario>.md
--> knowledge/<system-repair|feature-enhancement>/<scenario>/README.md
--> knowledge/<system-repair|feature-enhancement>/<scenario>/<topic>.md
+-> references/system-repair/<scenario>.md
+-> knowledge/system-repair/<scenario>/README.md
+-> knowledge/system-repair/<scenario>/<topic>.md
 ```
 
 只有 `README.md` 明确说明当前场景复用其他场景知识时，才跨场景读取；否则保持同类型、同场景路径。
 
 ## Fallback
 
-- 修复类未命中细分场景：读取 `system-repair/system.md`。
-- 增强类未命中细分场景：读取 `feature-enhancement/system.md`。
+未命中细分场景时，读取 `system-repair/system.md`。

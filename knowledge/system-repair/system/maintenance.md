@@ -31,7 +31,7 @@
 6. 优先做根因修复。workaround、watchdog、定时重启、自动重拉起等兜底方案只能作为临时恢复手段，不能替代根因定位。
 7. 优先做持久化修复：临时止血后，继续确认重启、重新登录、服务重拉起或应用重启后是否仍然有效。
 8. 修改完成后验证功能和状态，并说明哪些修复是运行时生效、哪些已写入持久配置。
-9. 如果产生新的可复用经验，更新 `SKILL.md`、新增/扩展 `references/system-repair/` 或 `references/feature-enhancement/` 路由，或沉淀到对应 `knowledge/` 章节。
+9. 如果产生新的可复用修复经验，更新 `SKILL.md`、新增/扩展 `references/system-repair/` 路由，或沉淀到对应 `knowledge/system-repair/` 章节；如果实际是功能增强经验，切换到 `$HOME/.os-enhance-skill` 记录。
 
 ## 维护模式检查
 
@@ -163,8 +163,8 @@ git -C "$HOME/.os-fix-skill" pull --ff-only
 
 如果实际解决的是当前 skill 尚未覆盖的系统问题：
 
-1. 新增合适的 `references/system-repair/<scenario>.md` 或 `references/feature-enhancement/<scenario>.md` 作为分类入口，或扩展最接近的现有 reference。
-2. 将详细诊断、修复、验证、回滚和清理经验沉淀到对应 `knowledge/` 章节。
+1. 新增合适的 `references/system-repair/<scenario>.md` 作为分类入口，或扩展最接近的现有 reference。
+2. 将详细诊断、修复、验证、回滚和清理经验沉淀到对应 `knowledge/system-repair/` 章节。
 3. 在 `SKILL.md` 的“参考文档”中补充入口和触发场景。
 4. 文档使用中文，避免写入当前用户专属路径、用户名或一次性状态。
 5. 使用 `$HOME`、`<user>`、`<app-id>`、`<desktop-id>`、`<service-name>` 等通用占位符。
