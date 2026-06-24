@@ -106,6 +106,8 @@ sed -n '1,80p' /opt/apps/<app>/<app>
 
 如果脚本包含 `/usr/bin/kare run <app-id> ...`，则 `/opt/kare/usr/share/applications/<app-id>.desktop` 和 `/opt/kare/usr/bin/<app-id>` 可能是运行期元数据，不是纯菜单残留。此时不要删除这些文件；应保留或恢复它们，并在 KARE desktop 中设置 `NoDisplay=true` 隐藏菜单入口，再用用户级可见入口承接开始菜单和 MIME 默认值。
 
+Firefox/Zen 类浏览器不适合长期放在每次 `kare run` 都创建新 namespace 的入口上。双击本地 HTML 或再次打开 URL 时，新实例可能看到同一个 profile 的 `lock`，但无法把打开请求转发给已有实例，于是提示 “already running, but is not responding”。若真实浏览器二进制在 KARE overlay 中能直接从宿主运行，可以复制为宿主原生目录，再把 `.desktop` 和 MIME 默认值改到宿主 wrapper；但在飞腾 FTG 图形栈上还要先按硬件章节评估是否需要禁用浏览器硬件加速，避免原生运行后触发 ES30/FTG devfreq 卡死。
+
 典型做法：
 
 1. 新增一个明确可用的用户级入口，例如 `$HOME/.local/share/applications/<app>-browser.desktop`，`Exec=` 指向已验证可用的宿主命令或启动脚本。

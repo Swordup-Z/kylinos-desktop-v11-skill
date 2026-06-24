@@ -75,6 +75,30 @@ devfreq PHYT0048:00: dvfs failed with (-15) error
 
 这说明当前硬件的图形驱动在动态调频路径上失败。若该错误与卡死、黑屏、图形异常时间接近，先不要默认把所有 `devfreq` 场景全局固定到 `performance`，否则会破坏“均衡/省电/性能”电源模式语义。优先保留 `simple_ondemand`，只抬高可疑 GPU/总线节点的 `min_freq` 下限；只有 A/B 验证下限策略仍会复现卡死，或用户明确接受更高功耗/发热取舍时，才考虑将特定节点或特定场景固定到 `performance`。
 
+如果卡死发生在把 KARE 打包的 Firefox/Zen 类浏览器复制为宿主原生运行之后，且日志同时出现大量 `ES30:texture(id=0) is incomplete`、`NewRenderer::Run is slow`、`GraphicsCriticalError`，随后紧跟 `failed to set ftg frequency:-15` 或 `devfreq PHYT0048:00: dvfs failed`，优先怀疑浏览器硬件加速触发 FTG 图形栈问题。此时不要只回滚到 KARE；可以先保留宿主原生启动以解决 profile 单实例和文件关联问题，但在 wrapper 和 profile 中禁用硬件图形路径：
+
+```sh
+#!/bin/sh
+export MOZ_X11_EGL=0
+export MOZ_ENABLE_WAYLAND=0
+export MOZ_WEBRENDER=0
+export MOZ_DISABLE_GPU_SANDBOX=1
+export LIBGL_ALWAYS_SOFTWARE=1
+exec /opt/<browser>/zen "$@"
+```
+
+同时在 Firefox/Zen profile 的 `user.js` 中固定软件渲染，防止配置界面或升级后重新启用硬件加速：
+
+```js
+user_pref("layers.acceleration.disabled", true);
+user_pref("gfx.webrender.force-disabled", true);
+user_pref("gfx.webrender.software", true);
+user_pref("media.hardware-video-decoding.enabled", false);
+user_pref("webgl.disabled", true);
+```
+
+验证时先确认没有旧 KARE 浏览器进程占用同一 profile，再启动宿主原生入口。成功时，日志里不应再持续出现 `ES30:texture` 和新的 `PHYT0048` devfreq 错误；本地 HTML 或链接再次打开时，只应短暂出现转发进程或新增内容进程，不应创建第二个主浏览器进程。
+
 若历史日志中还出现类似：
 
 ```text
