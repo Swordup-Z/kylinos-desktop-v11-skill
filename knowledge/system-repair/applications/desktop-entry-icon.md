@@ -108,6 +108,63 @@ sed -n '1,80p' /opt/apps/<app>/<app>
 
 Firefox/Zen 类浏览器不适合长期放在每次 `kare run` 都创建新 namespace 的入口上。双击本地 HTML 或再次打开 URL 时，新实例可能看到同一个 profile 的 `lock`，但无法把打开请求转发给已有实例，于是提示 “already running, but is not responding”。若真实浏览器二进制在 KARE overlay 中能直接从宿主运行，可以复制为宿主原生目录，再把 `.desktop` 和 MIME 默认值改到宿主 wrapper；但在飞腾 FTG 图形栈上还要先按硬件章节评估是否需要禁用浏览器硬件加速，避免原生运行后触发 ES30/FTG devfreq 卡死。
 
+如果宿主原生 Zen 已经可用，后续升级优先使用官方 `zen.linux-<arch>.tar.xz` 包直接替换宿主安装目录，不要再换回 KARE 入口，也不要在这类系统上优先使用 AppImage。AppImage 会额外引入 FUSE/沙箱/集成层变量，不能解决 profile 单实例路由问题，排障面更大。
+
+升级流程要点：
+
+1. 先确认维护模式、架构、当前版本和运行进程：
+
+```bash
+mm-cli -s
+uname -m
+/usr/local/bin/zen-browser --version
+pgrep -a -f '/opt/zen-browser/zen' || true
+```
+
+2. 从官方 release 下载与架构匹配的 `zen.linux-<arch>.tar.xz`，并用 release API 或发布页提供的 sha256 digest 做校验。校验失败不得安装。
+3. 解包到临时目录后先验证二进制：
+
+```bash
+file /tmp/<workdir>/zen/zen
+/tmp/<workdir>/zen/zen --version
+```
+
+4. 替换前正常关闭当前 Zen 主进程，确认没有 `/opt/zen-browser/zen` 残留，再备份旧目录并安装新目录：
+
+```bash
+kill -TERM <main-zen-pid>
+pgrep -a -f '/opt/zen-browser/zen' || true
+mv /opt/zen-browser /opt/zen-browser.backup-<date>
+mv /tmp/<workdir>/zen /opt/zen-browser
+chown -R root:root /opt/zen-browser
+```
+
+5. 保留原有宿主 wrapper，不要让 `.desktop` 直接执行 `/opt/zen-browser/zen`。在 FTG 图形栈机器上，wrapper 应继续携带软件渲染保护：
+
+```sh
+#!/bin/sh
+export MOZ_X11_EGL=0
+export MOZ_ENABLE_WAYLAND=0
+export MOZ_WEBRENDER=0
+export MOZ_DISABLE_GPU_SANDBOX=1
+export LIBGL_ALWAYS_SOFTWARE=1
+exec /opt/zen-browser/zen "$@"
+```
+
+6. 验证版本、桌面入口、MIME 默认值、本地 HTML 二次打开和日志：
+
+```bash
+/usr/local/bin/zen-browser --version
+desktop-file-validate "$HOME/.local/share/applications/zen-browser.desktop"
+xdg-mime query default x-scheme-handler/http
+xdg-mime query default text/html
+gio open /path/to/local.html
+journalctl -k --since '5 minutes ago' --no-pager | rg -i 'es30|texture|webrender|gpu|devfreq|ftg|error|failed'
+journalctl --user --since '5 minutes ago' --no-pager | rg -i 'zen|already running|profile|lock|responding|crash|failed'
+```
+
+验证通过的状态应是：主进程仍为 `/opt/zen-browser/zen`，再次打开本地 HTML 只转发到已有主进程并新增内容进程，不再出现 profile lock 或 “already running” 报错；内核日志不应新增 `failed to set ftg frequency`、`devfreq ... dvfs failed` 或连续 `ES30:texture` 错误。用户日志中单独的 GTK 主题 warning 或 UKUI transient scope warning 通常不是 Zen 启动失败。
+
 典型做法：
 
 1. 新增一个明确可用的用户级入口，例如 `$HOME/.local/share/applications/<app>-browser.desktop`，`Exec=` 指向已验证可用的宿主命令或启动脚本。
