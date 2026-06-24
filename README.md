@@ -71,29 +71,26 @@ opencode
 
 如果系统策略不允许 `curl | sh` 或 `curl | bash`，打开上面的官方页面，按当前 Linux 桌面环境选择独立安装包、npm 或其他受信任的安装方式。
 
-## 安装系统经验库
+## 安装本经验库
 
 ### 方式一：让 AI 工具安装
 
 把下面这段话发给 Codex、Claude Code、opencode 等工具即可：
 
 ```text
-请安装这两个 KylinOS Desktop V11 系统经验库：
+请安装这个 KylinOS Desktop V11 系统修复经验库：
 
-- 修复经验库：https://github.com/Swordup-Z/kylinos-v11-desktop-fix-skill
-- 功能增强经验库：https://github.com/Swordup-Z/kylinos-v11-desktop-enhance-skill
+https://github.com/Swordup-Z/kylinos-v11-desktop-fix-skill
 
 要求：
-1. 将修复经验库克隆到 $HOME/.os-fix-skill。
-2. 将功能增强经验库克隆到 $HOME/.os-enhance-skill。
-3. 根据当前工具类型，把全局提示词配置到用户级文件，例如：
+1. 将仓库克隆到 $HOME/.os-fix-skill。
+2. 根据当前工具类型，把全局提示词配置到用户级文件，例如：
    - Codex: $HOME/.codex/AGENTS.md
    - Claude Code: $HOME/.claude/CLAUDE.md
    - opencode: $HOME/.config/opencode/AGENTS.md
-4. 当用户处理 KylinOS Desktop V11、UKUI、KARE/Kaiming、Clash Verge、TUN、维护模式、磐石架构、系统服务、分区挂载、AI 子系统等桌面系统修复问题时，先读取 $HOME/.os-fix-skill/SKILL.md，再按里面的 references 路由继续读取。
-5. 当用户处理系统功能增强、本地客制化、默认行为调整、AI 工具配置或源码级功能新增时，先读取 $HOME/.os-enhance-skill/SKILL.md，再按里面的 references 路由继续读取。
-6. 当用户在 $HOME/desktop-develop 或 /data/usershare/desktop-develop 下进行独立工具/应用开发时，先读取对应目录的 AGENTS.md，并按工作区或项目级提示词路由；不要把项目实现要求写入任一 skill。
-7. 配置完成后告诉我两个入口文件路径和后续如何使用。
+3. 当用户处理 KylinOS Desktop V11、UKUI、KARE/Kaiming、Clash Verge、TUN、维护模式、磐石架构、系统服务、分区挂载、AI 子系统等桌面系统修复问题时，先读取 $HOME/.os-fix-skill/SKILL.md，再按里面的 references 路由继续读取。
+4. 当用户处理系统功能增强、本地客制化、默认行为调整、AI 工具配置或源码级功能新增时，不使用本仓库，应切换到对应的功能增强经验库。
+5. 配置完成后告诉我入口文件路径和后续如何使用。
 ```
 
 ### 方式二：手动安装
@@ -101,14 +98,12 @@ opencode
 ```bash
 cd "$HOME"
 git clone https://github.com/Swordup-Z/kylinos-v11-desktop-fix-skill.git "$HOME/.os-fix-skill"
-git clone https://github.com/Swordup-Z/kylinos-v11-desktop-enhance-skill.git "$HOME/.os-enhance-skill"
 ```
 
 入口文件：
 
 ```text
-修复入口：$HOME/.os-fix-skill/SKILL.md
-增强入口：$HOME/.os-enhance-skill/SKILL.md
+$HOME/.os-fix-skill/SKILL.md
 ```
 
 常见 AI 工具的用户级提示词位置：
